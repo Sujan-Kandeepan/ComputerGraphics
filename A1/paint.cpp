@@ -63,6 +63,7 @@ static int currentPointColor = 0;
 // Static value of current point size (1-5)
 static int currentPointSize = 3;
 
+// Static char buffer for display message
 static char displayMessage[64] = { '\0' };
 
 // Static global array of points on screen
