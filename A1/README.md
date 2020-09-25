@@ -9,6 +9,7 @@ Run `make` within the current `A1` directory using the included `makefile` (ensu
 - Numbers '6' to '0' to change background colour of window
 - Display text for point size/colour and background colour within window
 - Ability to resize window and continue drawing on existing window
+- Window always appears in center of screen instead of relative to corner
 - Points drawn appear round instead of square for more natural look
 - Usage instructions printed to terminal during program launch
 
