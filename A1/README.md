@@ -15,11 +15,11 @@ Run `make` within the current `A1` directory using the included `makefile` (ensu
 
 ## Some Resources Used for Part B
 
-- https://community.khronos.org/t/how-to-set-the-background-color/27016
-- https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glClearColor.xhtml
-- https://stackoverflow.com/questions/2181955/center-an-opengl-window-with-glut
-- https://stackoverflow.com/questions/2183270/what-is-the-easiest-way-to-print-text-to-screen-in-opengl
-- https://stackoverflow.com/questions/51973475/gl-points-draws-a-circle
-- https://web.archive.org/web/20180301041827/https://prideout.net/archive/colors.php
+- <https://community.khronos.org/t/how-to-set-the-background-color/27016>
+- <https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glClearColor.xhtml>
+- <https://stackoverflow.com/questions/2181955/center-an-opengl-window-with-glut>
+- <https://stackoverflow.com/questions/2183270/what-is-the-easiest-way-to-print-text-to-screen-in-opengl>
+- <https://stackoverflow.com/questions/51973475/gl-points-draws-a-circle>
+- <https://web.archive.org/web/20180301041827/https://prideout.net/archive/colors.php>
 - Frequently referenced OpenGL/GLUT and C++ documentation/examples
 - Sometimes referenced code examples from course slides and lectures.
