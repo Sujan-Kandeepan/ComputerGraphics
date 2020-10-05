@@ -78,8 +78,6 @@ void drawVerLine(float x, float ymin, float ymax, float color[3])
 void drawRectangle(float xmin, float xmax,
 	float ymin, float ymax, float color[3])
 {
-	// if (xmax <= 120 && ymax <= 120)
-	// 	printf("%.f %.f %.f %.f\n", xmin, xmax, ymin, ymax);
 	for (int y = ymin; y <= ymax; y++)
 		for (int x = xmin; x <= xmax; x++)
 			drawPoint(x, y, color);
@@ -108,7 +106,6 @@ void drawGrid()
 		if (i % (windowSize / gridSize) ==
 			floor(gridlineThickness / 2))
 				i += (windowSize / gridSize) - gridlineThickness;
-		// printf("%d\n", i);
 		drawHorLine(0, windowSize, i, darkgrey);
 		drawVerLine(i, 0, windowSize, darkgrey);
 	}
@@ -214,7 +211,7 @@ void randomRobotPosition()
 	robotDirection = robotSpawnDirection;
 }
 
-// Display function: renders points on screen
+// Display function: renders grid and moving robot on screen
 void display()
 {
 	// Clear OpenGL color buffer
@@ -228,7 +225,7 @@ void display()
 	// Flushes buffered commands to display
 	glFlush();
 
-	// Redraw points continuously
+	// Redraw grid and moving robot continuously
 	glutPostRedisplay();
 }
 
