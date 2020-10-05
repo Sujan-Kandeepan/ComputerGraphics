@@ -19,7 +19,7 @@ float camPos[] = {0, 0, 80};
 // Draws a sphere (DO NOT CHANGE THIS FUNCTION)
 void drawSphere()
 {
-    glutSolidSphere(1,10,10);
+	glutSolidSphere(1,10,10);
 }
 
 // Initialization function
@@ -33,7 +33,7 @@ void init(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-    // Sets projection to perspective
+	// Sets projection to perspective
 	gluPerspective(45, 1, 1, 100);
 }
 
@@ -54,11 +54,11 @@ void display(void)
 	glColor3f(1,1,1);
 
 	// Draw the sun!
-    glPushMatrix();
-        glColor3f(1,1,0);
-        glScalef(2,2,1);
-        drawSphere();
-    glPopMatrix();
+	glPushMatrix();
+		glColor3f(1,1,0);
+		glScalef(2,2,1);
+		drawSphere();
+	glPopMatrix();
 
 	// Flush out to single buffer
 	glFlush();
