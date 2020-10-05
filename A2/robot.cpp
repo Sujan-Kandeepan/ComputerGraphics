@@ -477,7 +477,7 @@ int main(int argc, char ** argv)
 		(glutGet(GLUT_SCREEN_WIDTH) - windowSize) / 2,
 		(glutGet(GLUT_SCREEN_HEIGHT) - windowSize) / 2);
 
-	// Create window (main drawing canvas)
+	// Create window for displaying grid and moving robot
 	glutCreateWindow("3GC3 - Assignment 2 (Part A)");
 
 	// Set coordinate system by global square window size
