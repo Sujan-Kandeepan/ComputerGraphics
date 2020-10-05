@@ -67,7 +67,7 @@ void drawHorLine(float xmin, float xmax, float y, float color[3])
 		drawPoint(x, y, color);
 }
 
-// Function to draw verfical line with given position and color
+// Function to draw vertical line with given position and color
 void drawVerLine(float x, float ymin, float ymax, float color[3])
 {
 	for (int y = ymin; y <= ymax; y++)
