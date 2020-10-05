@@ -71,6 +71,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA);
 
+	// Set initial window size
 	glutInitWindowSize(600, 600);
 
 	// Create window for displaying solar system
@@ -79,6 +80,7 @@ int main(int argc, char** argv)
 	// I/O function bindings
 	glutDisplayFunc(display);
 
+	// Call initialization logic
 	init();
 
 	// Main program loop
