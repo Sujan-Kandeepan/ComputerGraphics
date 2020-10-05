@@ -1,6 +1,8 @@
+// Standard C++ library imports
 #include <stdio.h>
 #include <stdlib.h>
 
+// OpenGL and GLUT imports
 #ifdef __APPLE__
 #  include <OpenGL/gl.h>
 #  include <OpenGL/glu.h>
@@ -11,64 +13,77 @@
 #  include <GL/freeglut.h>
 #endif
 
-//Globals
-float camPos[] = {0, 0, 80};	//where the camera is
+// Global variable for camera position
+float camPos[] = {0, 0, 80};
 
-/* Draws a sphere
- Do not change this function */
-void drawSphere(){
+// Draws a sphere (DO NOT CHANGE THIS FUNCTION)
+void drawSphere()
+{
     glutSolidSphere(1,10,10);
 }
 
+// Initialization function
 void init(void)
 {
+	// Initial black background and white color
 	glClearColor(0, 0, 0, 0);
 	glColor3f(1, 1, 1);
 
+	// Load identity matrix for projection
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-    /* Sets projection to perspective */
+
+    // Sets projection to perspective
 	gluPerspective(45, 1, 1, 100);
 }
 
-/* display function - GLUT display callback function
- *		clears the screen, sets the camera position, draws the ground plane and movable box
- */
+// Display function: GLUT display callback function
+// clears the screen, sets the camera position,
+// draws the groundplane and movable box
 void display(void)
 {
+	// Clear OpenGL color buffer
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Load identity matrix for projection
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	// Set camera position and initial color
 	gluLookAt(camPos[0], camPos[1], camPos[2], 0, 0, 0, 0,1,0);
 	glColor3f(1,1,1);
 
-	//draw the sun!
+	// Draw the sun!
     glPushMatrix();
         glColor3f(1,1,0);
         glScalef(2,2,1);
         drawSphere();
     glPopMatrix();
-    
-	//flush out to single buffer
+
+	// Flush out to single buffer
 	glFlush();
 }
 
-/* main function - program entry point */
+// Main function: program entry point and initialization
 int main(int argc, char** argv)
 {
-	glutInit(&argc, argv);		//starts up GLUT
+	// GLUT initialization
+	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA);
 
 	glutInitWindowSize(600, 600);
 
-	glutCreateWindow("SolarSystem");	//creates the window
+	// Create window for displaying solar system
+	glutCreateWindow("3GC3 - Assignment 2 (Part B)");
 
-	glutDisplayFunc(display);	//registers "display" as the display callback function
+	// I/O function bindings
+	glutDisplayFunc(display);
 
 	init();
 
-	glutMainLoop();				//starts the event glutMainLoop
-	return(0);					//return may not be necessary on all compilers
+	// Main program loop
+	glutMainLoop();
+
+	// Exit normally
+	return(0);
 }
