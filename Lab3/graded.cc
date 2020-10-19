@@ -51,6 +51,8 @@ void display(void) {
     // Write your code here!
     glColor3f(1, 0, 0);
     glPushMatrix();
+        glTranslatef(0, 0, -30);
+        glRotatef(45, 0, 0, 1);
         glutWireTeapot(1);
     glPopMatrix();
 
@@ -89,10 +91,27 @@ void handleKeyboard(unsigned char key, int _x, int _y) {
         display();
     } else if (key == '1') {
         // Write your code here!
-
+        eye[0] = 5;
+        eye[1] = 0;
+        eye[2] = -10;
+        lookAt[0] = 0;
+        lookAt[1] = 0;
+        lookAt[2] = -10;
+        up[0] = 0;
+        up[1] = -1;
+        up[2] = 0;
         display();
     } else if (key == '2') {
         // Write your code here!
+        eye[0] = 2;
+        eye[1] = -2;
+        eye[2] = 0;
+        lookAt[0] = 2;
+        lookAt[1] = -2;
+        lookAt[2] = -5;
+        up[0] = -1;
+        up[1] = 0;
+        up[2] = 0;
         display();
     } else if (key == '3') {
         eye[0] = 0;
