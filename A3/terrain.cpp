@@ -1,5 +1,4 @@
 // Standard C++ library imports
-#include <iostream>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -213,7 +212,13 @@ void keyboard(unsigned char key, int x, int y)
 	// Perform action depending on character received
 	switch (key)
 	{
-		// Exit program
+		// Toggle lighting
+		case 'l':
+		case 'L':
+			// TODO: implement lighting
+			break;
+
+		// Quit program
 		case 'q':
 		case 'Q':
 		case 27:
@@ -286,11 +291,19 @@ int main(int argc, char ** argv)
 {
 	// Prompt for square grid size in command line
 	while (gridSize < minGridSize || gridSize > maxGridSize) {
-		std::cout
-			<< "Enter a grid size for the terrain"
-			<< " (between 50 and 300): ";
-		std::cin >> gridSize;
+		printf("Enter a grid size for the terrain"
+			" (between 50 and 300): ");
+		scanf("%d", &gridSize);
 	}
+
+	// Display keyboard controls to command line
+	printf("Keyboard controls:\n"
+		"Arrows - Move camera\n"
+		"L      - Toggle lighting\n"
+		"Q/Esc  - Quit program\n"
+		"R      - Reset terrain\n"
+		"S      - Toggle strips (polygon) mode\n"
+		"W      - Toggle wireframe mode\n");
 
 	// Generate new terrain
 	newTerrain();
