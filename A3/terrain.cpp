@@ -131,8 +131,10 @@ void newTerrain()
 		circleDisplacement = 1;
 
 		// Adjust height for every point in grid
-		for (int x = 0; x < gridSize; x++) {
-			for (int z = 0; z < gridSize; z++) {
+		for (int x = 0; x < gridSize; x++)
+		{
+			for (int z = 0; z < gridSize; z++)
+			{
 				// Compute normalized distance from circle center
 				distance = sqrt(pow(circleX - x, 2)
 					+ pow(circleZ - z, 2));
@@ -175,7 +177,8 @@ void display()
 		for (int z = 0; z < gridSize - 1; z++)
 		{
 			// Draw solid shapes if applicable
-			if (wireframeMode != WIREFRAME) {
+			if (wireframeMode != WIREFRAME)
+			{
 				if (stripsMode == TRIANGLES)
 					drawTriangleCell(x, z, 0);
 				else
@@ -190,7 +193,8 @@ void display()
 		for (int z = 0; z < gridSize - 1; z++)
 		{
 			// Draw wireframes if applicable
-			if (wireframeMode != SOLID) {
+			if (wireframeMode != SOLID)
+			{
 				if (stripsMode == TRIANGLES)
 					drawTriangleCell(x, z, 1);
 				else
@@ -290,7 +294,8 @@ void reshape(int w, int h)
 int main(int argc, char ** argv)
 {
 	// Prompt for square grid size in command line
-	while (gridSize < minGridSize || gridSize > maxGridSize) {
+	while (gridSize < minGridSize || gridSize > maxGridSize)
+	{
 		printf("Enter a grid size for the terrain"
 			" (between 50 and 300): ");
 		scanf("%d", &gridSize);
