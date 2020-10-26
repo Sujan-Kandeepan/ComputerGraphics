@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <vector>
 
 // OpenGL and GLUT imports
 #ifdef __APPLE__
@@ -160,12 +159,40 @@ void drawTerrain(int window)
 	glutPostRedisplay();
 }
 
+// Add circle function: add circle in circles algorithm
+void addCircle(float circleX, float circleZ,
+	float circleSize, float circleDisplacement)
+{
+	// Reset stored value for greatest height
+	greatestHeight = 0;
+
+	// Adjust height for every point in grid
+	for (int x = 0; x < gridSize; x++)
+	{
+		for (int z = 0; z < gridSize; z++)
+		{
+			// Compute normalized distance from circle center
+			float distance = sqrt(pow(circleX - x, 2)
+				+ pow(circleZ - z, 2));
+			distance = distance * 2 / circleSize;
+
+			// Adjust height using cosine function
+			if (fabs(distance) <= 1)
+				heightMap[x][z] += circleDisplacement/2
+					* (cos(distance * M_PI) + 1);
+
+			// Keep record of greatest height
+			if (heightMap[x][z] > greatestHeight)
+				greatestHeight = heightMap[x][z];
+		}
+	}
+}
+
 // New terrain function: circles algorithm for new terrain
 void newTerrain()
 {
 	// Variable declarations for circle dimensions/placement
-	float circleX, circleZ, circleSize,
-		circleDisplacement, distance;
+	float circleX, circleZ, circleSize, circleDisplacement;
 
 	// Initialize all height values to 0
 	for (int x = 0; x < gridSize; x++)
@@ -178,28 +205,10 @@ void newTerrain()
 		circleX = rand() % gridSize;
 		circleZ = rand() % gridSize;
 		circleSize = rand() % gridSize / 2 + 5;
-		circleDisplacement = 1;
+		circleDisplacement = circleSize / gridSize * 5;
 
-		// Adjust height for every point in grid
-		for (int x = 0; x < gridSize; x++)
-		{
-			for (int z = 0; z < gridSize; z++)
-			{
-				// Compute normalized distance from circle center
-				distance = sqrt(pow(circleX - x, 2)
-					+ pow(circleZ - z, 2));
-				distance = distance * 2 / circleSize;
-
-				// Adjust height using cosine function
-				if (fabs(distance) <= 1)
-					heightMap[x][z] += circleDisplacement/2
-						* (cos(distance * M_PI) + 1);
-
-				// Keep record of greatest height
-				if (heightMap[x][z] > greatestHeight)
-					greatestHeight = heightMap[x][z];
-			}
-		}
+		// Add circle pushing up using common logic
+		addCircle(circleX, circleZ, circleSize, circleDisplacement);
 	}
 }
 
@@ -272,6 +281,30 @@ void keyboard(unsigned char key, int x, int y)
 			wireframeMode =
 				(WireframeMode)((wireframeMode + 1) % 3);
 			break;
+	}
+}
+
+// Mouse function: terrain adjustment using mouse click on second window
+void mouse(int button, int state, int x, int y)
+{
+	// Scale and round coordinates based on grid size
+	x = floor(x * gridSize / secondDisplayWidth);
+	y = floor(y * gridSize / secondDisplayHeight);
+
+	// Increase height within limit on left mouse click
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+	{
+		// Add circle pushing upward using common logic
+		if (heightMap[x][y] <= gridSize / 3)
+			addCircle(x, y, gridSize / 5, gridSize / 50);
+	}
+
+	// Decrease height within limit on right mouse click
+	if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+	{
+		// Add circle pushing downward using common logic
+		if (heightMap[x][y] >= 1)
+			addCircle(x, y, gridSize / 5, -1 * gridSize / 50);
 	}
 }
 
@@ -391,6 +424,7 @@ int main(int argc, char ** argv)
 	// I/O function bindings
 	glutDisplayFunc(display2);
 	glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouse);
 	glutReshapeFunc(reshape2);
 	glutSpecialFunc(special);
 
