@@ -15,10 +15,12 @@
 #  include <GL/freeglut.h>
 #endif
 
-// Constants for window and grid size initialization
+// Values for window and grid size initialization
 static const int minGridSize = 50;
 static const int maxGridSize = 300;
 static const int windowSize = 600;
+static int secondDisplayWidth;
+static int secondDisplayHeight;
 
 // RGB float values for terrain colors
 static float lowColor[] = { 0.150, 0.150, 0.000 };
@@ -46,13 +48,13 @@ enum StripsMode { SQUARES, TRIANGLES };
 StripsMode stripsMode = SQUARES;
 
 // Draw a vertex at a given location
-void drawVertex(int x, int z, int wireframe)
+void drawVertex(int x, int z, int wireframe, int window)
 {
 	// Compute height normalized wrt. highest point
 	float height = heightMap[x][z] / greatestHeight;
 
 	// Set color for wireframe
-	if (wireframe)
+	if (wireframe && window == 1)
 		glColor3fv(wireColor);
 
 	// Set color for solid shape
@@ -65,49 +67,97 @@ void drawVertex(int x, int z, int wireframe)
 			(lowColor[2] * (1 - height)
 				+ highColor[2] * (height)));
 
-	// Draw vertex (slightly higher for wireframe)
-	glVertex3f(
-		0 - (gridSize - 1) / 2 + x,
-		heightMap[x][z] + (wireframe ? 0.1 : 0),
-		0 - (gridSize - 1) / 2 + z);
+	// Draw vertex for first window (slightly higher for wireframe)
+	if (window == 1)
+		glVertex3f(
+			0 - (gridSize - 1) / 2 + x,
+			heightMap[x][z] + (wireframe ? 0.1 : 0),
+			0 - (gridSize - 1) / 2 + z);
+
+	// Draw vertex for second window
+	if (window == 2)
+		glVertex2f(x * secondDisplayWidth / (gridSize - 1),
+			(gridSize - 1 - z) * secondDisplayWidth / (gridSize - 1));
 }
 
 // Draw 2x2 sub-grid adjacent to vertex using square
-void drawSquareCell(int x, int z, int wireframe)
+void drawSquareCell(int x, int z, int wireframe, int window)
 {
 	// Set to either wireframe or solid shape
-	if (wireframe)
+	if (wireframe && window == 1)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// Draw square counter-clockwise
 	glBegin(GL_QUADS);
-		drawVertex(x, z, wireframe);
-		drawVertex(x, z + 1, wireframe);
-		drawVertex(x + 1, z + 1, wireframe);
-		drawVertex(x + 1, z, wireframe);
+		drawVertex(x, z, wireframe, window);
+		drawVertex(x, z + 1, wireframe, window);
+		drawVertex(x + 1, z + 1, wireframe, window);
+		drawVertex(x + 1, z, wireframe, window);
 	glEnd();
 }
 
 // Draw 2x2 sub-grid adjacent to vertex using two triangles
-void drawTriangleCell(int x, int z, int wireframe)
+void drawTriangleCell(int x, int z, int wireframe, int window)
 {
 	// Set to either wireframe or solid shape
-	if (wireframe)
+	if (wireframe && window == 1)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// Draw two connected triangles counter-clockwise
 	glBegin(GL_TRIANGLES);
-		drawVertex(x, z, wireframe);
-		drawVertex(x, z + 1, wireframe);
-		drawVertex(x + 1, z + 1, wireframe);
-		drawVertex(x, z, wireframe);
-		drawVertex(x + 1, z + 1, wireframe);
-		drawVertex(x + 1, z, wireframe);
+		drawVertex(x, z, wireframe, window);
+		drawVertex(x, z + 1, wireframe, window);
+		drawVertex(x + 1, z + 1, wireframe, window);
+		drawVertex(x, z, wireframe, window);
+		drawVertex(x + 1, z + 1, wireframe, window);
+		drawVertex(x + 1, z, wireframe, window);
 	glEnd();
+}
+
+// Draw terrain on first and second window
+void drawTerrain(int window)
+{
+	// Iterate over all points first time
+	for (int x = 0; x < gridSize - 1; x++)
+	{
+		for (int z = 0; z < gridSize - 1; z++)
+		{
+			// Draw solid shapes if applicable
+			if (wireframeMode != WIREFRAME)
+			{
+				if (stripsMode == TRIANGLES)
+					drawTriangleCell(x, z, 0, window);
+				else
+					drawSquareCell(x, z, 0, window);
+			}
+		}
+	}
+
+	// Iterate over all points second time
+	for (int x = 0; x < gridSize - 1; x++)
+	{
+		for (int z = 0; z < gridSize - 1; z++)
+		{
+			// Draw wireframes if applicable
+			if (wireframeMode != SOLID)
+			{
+				if (stripsMode == TRIANGLES)
+					drawTriangleCell(x, z, 1, window);
+				else
+					drawSquareCell(x, z, 1, window);
+			}
+		}
+	}
+
+	// Flushes buffered commands to display
+	glFlush();
+
+	// Redraw terrain continuously
+	glutPostRedisplay();
 }
 
 // New terrain function: circles algorithm for new terrain
@@ -153,7 +203,7 @@ void newTerrain()
 	}
 }
 
-// Display function: renders terrain on screen
+// Display function: renders terrain on first window
 void display()
 {
 	// Reset display before rendering terrain
@@ -171,43 +221,18 @@ void display()
 	glRotatef(cameraRotationX, 1, 0, 0);
 	glRotatef(cameraRotationY, 0, 1, 0);
 
-	// Iterate over all points first time
-	for (int x = 0; x < gridSize - 1; x++)
-	{
-		for (int z = 0; z < gridSize - 1; z++)
-		{
-			// Draw solid shapes if applicable
-			if (wireframeMode != WIREFRAME)
-			{
-				if (stripsMode == TRIANGLES)
-					drawTriangleCell(x, z, 0);
-				else
-					drawSquareCell(x, z, 0);
-			}
-		}
-	}
+	// Draw terrain using common logic
+	drawTerrain(1);
+}
 
-	// Iterate over all points second time
-	for (int x = 0; x < gridSize - 1; x++)
-	{
-		for (int z = 0; z < gridSize - 1; z++)
-		{
-			// Draw wireframes if applicable
-			if (wireframeMode != SOLID)
-			{
-				if (stripsMode == TRIANGLES)
-					drawTriangleCell(x, z, 1);
-				else
-					drawSquareCell(x, z, 1);
-			}
-		}
-	}
+// Display 2 function: renders terrain overview on second window
+void display2()
+{
+	// Clear OpenGL color buffer
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	// Flushes buffered commands to display
-	glFlush();
-
-	// Redraw terrain continuously
-	glutPostRedisplay();
+	// Draw terrain using common logic
+	drawTerrain(2);
 }
 
 // Keyboard function: handles standard keyboard controls
@@ -280,7 +305,7 @@ void special(int key, int x, int y)
 	}
 }
 
-// Reshape function: adjusts terrain view upon window resize
+// Reshape function: adjusts terrain view upon resize of first window
 void reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
@@ -288,6 +313,23 @@ void reshape(int w, int h)
 	glLoadIdentity();
 	gluPerspective(45, 1, 1, maxGridSize * 2);
 	glMatrixMode(GL_MODELVIEW);
+}
+
+// Reshape 2 function: adjusts terrain overviw upon resize of second window
+void reshape2(int w, int h)
+{
+	// Update global constants for window dimensions
+	secondDisplayWidth = w;
+	secondDisplayHeight = h;
+
+	// Reset pixel matrix with new dimensions
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0, secondDisplayWidth, 0, secondDisplayHeight);
+
+	// Reconstruct view of 2D projection
+	glMatrixMode(GL_MODELVIEW);
+	glViewport(0, 0, secondDisplayWidth, secondDisplayHeight);
 }
 
 // Main function: entry point and initialization
@@ -303,12 +345,12 @@ int main(int argc, char ** argv)
 
 	// Display keyboard controls to command line
 	printf("Keyboard controls:\n"
-		"Arrows - Move camera\n"
-		"L      - Toggle lighting\n"
-		"Q/Esc  - Quit program\n"
-		"R      - Reset terrain\n"
-		"S      - Toggle strips (polygon) mode\n"
-		"W      - Toggle wireframe mode\n");
+		" - Arrows -> Move camera\n"
+		" - L      -> Toggle lighting\n"
+		" - Q/Esc  -> Quit program\n"
+		" - R      -> Reset terrain\n"
+		" - S      -> Toggle strips (polygon) mode\n"
+		" - W      -> Toggle wireframe mode\n");
 
 	// Generate new terrain
 	newTerrain();
@@ -317,14 +359,14 @@ int main(int argc, char ** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
 
-	// Set window dimensions to constant size
+	// Set dimensions and position of first window
 	glutInitWindowSize(windowSize, windowSize);
 	glutInitWindowPosition(
-		(glutGet(GLUT_SCREEN_WIDTH) - windowSize) / 2,
+		(glutGet(GLUT_SCREEN_WIDTH) - windowSize) / 4,
 		(glutGet(GLUT_SCREEN_HEIGHT) - windowSize) / 2);
 
 	// Create window for displaying terrain
-	glutCreateWindow("3GC3 - Assignment 3");
+	glutCreateWindow("3GC3 - Assignment 3 | 3D Camera View");
 
 	// I/O function bindings
 	glutDisplayFunc(display);
@@ -336,6 +378,21 @@ int main(int argc, char ** argv)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+
+	// Set dimensions and position of second window
+	glutInitWindowSize(windowSize, windowSize);
+	glutInitWindowPosition(
+		(glutGet(GLUT_SCREEN_WIDTH) - windowSize) * 3 / 4,
+		(glutGet(GLUT_SCREEN_HEIGHT) - windowSize) / 2);
+
+	// Create window for displaying terrain
+	glutCreateWindow("3GC3 - Assignment 3 | 2D Overview");
+
+	// I/O function bindings
+	glutDisplayFunc(display2);
+	glutKeyboardFunc(keyboard);
+	glutReshapeFunc(reshape2);
+	glutSpecialFunc(special);
 
 	// Main program loop
 	glutMainLoop();
