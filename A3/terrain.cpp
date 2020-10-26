@@ -377,13 +377,16 @@ int main(int argc, char ** argv)
 	}
 
 	// Display keyboard controls to command line
-	printf("Keyboard controls:\n"
+	printf("Keyboard controls (both windows):\n"
 		" - Arrows -> Move camera\n"
 		" - L      -> Toggle lighting\n"
 		" - Q/Esc  -> Quit program\n"
 		" - R      -> Reset terrain\n"
 		" - S      -> Toggle strips (polygon) mode\n"
-		" - W      -> Toggle wireframe mode\n");
+		" - W      -> Toggle wireframe mode\n"
+		"Mouse controls (second window only):\n"
+		" - Left click  -> Increase height where clicked\n"
+		" - Right click -> Decrease height where clicked\n");
 
 	// Generate new terrain
 	newTerrain();
