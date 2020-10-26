@@ -46,12 +46,17 @@ WireframeMode wireframeMode = SOLID;
 enum StripsMode { SQUARES, TRIANGLES };
 StripsMode stripsMode = SQUARES;
 
+// Draw a vertex at a given location
 void drawVertex(int x, int z, int wireframe)
 {
+	// Compute height normalized wrt. highest point
 	float height = heightMap[x][z] / greatestHeight;
 
+	// Set color for wireframe
 	if (wireframe)
 		glColor3fv(wireColor);
+
+	// Set color for solid shape
 	else
 		glColor3f(
 			(lowColor[0] * (1 - height)
@@ -61,19 +66,23 @@ void drawVertex(int x, int z, int wireframe)
 			(lowColor[2] * (1 - height)
 				+ highColor[2] * (height)));
 
+	// Draw vertex (slightly higher for wireframe)
 	glVertex3f(
 		0 - (gridSize - 1) / 2 + x,
 		heightMap[x][z] + (wireframe ? 0.1 : 0),
 		0 - (gridSize - 1) / 2 + z);
 }
 
+// Draw 2x2 sub-grid adjacent to vertex using square
 void drawSquareCell(int x, int z, int wireframe)
 {
+	// Set to either wireframe or solid shape
 	if (wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	// Draw square counter-clockwise
 	glBegin(GL_QUADS);
 		drawVertex(x, z, wireframe);
 		drawVertex(x, z + 1, wireframe);
@@ -82,13 +91,16 @@ void drawSquareCell(int x, int z, int wireframe)
 	glEnd();
 }
 
+// Draw 2x2 sub-grid adjacent to vertex using two triangles
 void drawTriangleCell(int x, int z, int wireframe)
 {
+	// Set to either wireframe or solid shape
 	if (wireframe)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	
+
+	// Draw two connected triangles counter-clockwise
 	glBegin(GL_TRIANGLES);
 		drawVertex(x, z, wireframe);
 		drawVertex(x, z + 1, wireframe);
@@ -102,28 +114,37 @@ void drawTriangleCell(int x, int z, int wireframe)
 // New terrain function: circles algorithm for new terrain
 void newTerrain()
 {
+	// Variable declarations for circle dimensions/placement
 	float circleX, circleZ, circleSize,
-		circleDisplacement;
+		circleDisplacement, distance;
 
 	// Initialize all height values to 0
 	for (int x = 0; x < gridSize; x++)
 		for (int z = 0; z < gridSize; z++)
 			heightMap[x][z] = 0;
 
+	// Iterate number of times given by grid size
 	for (int i = 0; i < gridSize; i++) {
+		// Randomize circle dimensions/placement
 		circleX = rand() % gridSize;
 		circleZ = rand() % gridSize;
 		circleSize = rand() % gridSize / 2 + 5;
 		circleDisplacement = 1;
 
+		// Adjust height for every point in grid
 		for (int x = 0; x < gridSize; x++) {
 			for (int z = 0; z < gridSize; z++) {
-				float distance = sqrt(pow(circleX - x, 2)
+				// Compute normalized distance from circle center
+				distance = sqrt(pow(circleX - x, 2)
 					+ pow(circleZ - z, 2));
 				distance = distance * 2 / circleSize;
+
+				// Adjust height using cosine function
 				if (fabs(distance) <= 1)
 					heightMap[x][z] += circleDisplacement/2
 						* (cos(distance * M_PI) + 1);
+
+				// Keep record of greatest height
 				if (heightMap[x][z] > greatestHeight)
 					greatestHeight = heightMap[x][z];
 			}
@@ -134,45 +155,55 @@ void newTerrain()
 // Display function: renders terrain on screen
 void display()
 {
+	// Reset display before rendering terrain
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glLoadIdentity();
+	glLoadIdentity();
 
-    gluLookAt(
-        0, 0, gridSize,
-        0, 0, 0,
-        0, 1, 0
-    );
+	// Position camera in front of terrain
+	gluLookAt(
+		0, 0, gridSize,
+		0, 0, 0,
+		0, 1, 0
+	);
 
-    glRotatef(cameraRotationX, 1, 0, 0);
-    glRotatef(cameraRotationY, 0, 1, 0);
+	// Rotate before displaying terrain
+	glRotatef(cameraRotationX, 1, 0, 0);
+	glRotatef(cameraRotationY, 0, 1, 0);
 
-    for (int i = 0; i < gridSize - 1; i++)
-    {
-    	for (int j = 0; j < gridSize - 1; j++)
-    	{
-    		if (wireframeMode != WIREFRAME) {
-    			if (stripsMode == TRIANGLES)
-		    		drawTriangleCell(i, j, 0);
-		    	else
-		    		drawSquareCell(i, j, 0);
-    		}
-    	}
-    }
-    
-    for (int i = 0; i < gridSize - 1; i++)
-    {
-    	for (int j = 0; j < gridSize - 1; j++)
-    	{
-    		if (wireframeMode != SOLID) {
-    			if (stripsMode == TRIANGLES)
-		    		drawTriangleCell(i, j, 1);
-		    	else
-		    		drawSquareCell(i, j, 1);
-    		}
-    	}
-    }
+	// Iterate over all points first time
+	for (int x = 0; x < gridSize - 1; x++)
+	{
+		for (int z = 0; z < gridSize - 1; z++)
+		{
+			// Draw solid shapes if applicable
+			if (wireframeMode != WIREFRAME) {
+				if (stripsMode == TRIANGLES)
+					drawTriangleCell(x, z, 0);
+				else
+					drawSquareCell(x, z, 0);
+			}
+		}
+	}
 
+	// Iterate over all points second time
+	for (int x = 0; x < gridSize - 1; x++)
+	{
+		for (int z = 0; z < gridSize - 1; z++)
+		{
+			// Draw wireframes if applicable
+			if (wireframeMode != SOLID) {
+				if (stripsMode == TRIANGLES)
+					drawTriangleCell(x, z, 1);
+				else
+					drawSquareCell(x, z, 1);
+			}
+		}
+	}
+
+	// Flushes buffered commands to display
 	glFlush();
+
+	// Redraw terrain continuously
 	glutPostRedisplay();
 }
 
@@ -216,17 +247,24 @@ void special(int key, int x, int y)
 	// Perform action depending on which key pressed
 	switch (key)
 	{
+		// Pan camera up until directly above
 		case GLUT_KEY_UP:
 			if (cameraRotationX < 90)
 				cameraRotationX++;
 			break;
+
+		// Pan camera down until almost level
 		case GLUT_KEY_DOWN:
 			if (cameraRotationX > 5)
 				cameraRotationX--;
 			break;
+
+		// Rotate camera clockwise around terrain
 		case GLUT_KEY_LEFT:
 			cameraRotationY++;
 			break;
+
+		// Rotate camera counter-clockwise around terrain
 		case GLUT_KEY_RIGHT:
 			cameraRotationY--;
 			break;
@@ -237,10 +275,10 @@ void special(int key, int x, int y)
 void reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, 1, 1, maxGridSize * 2);
-    glMatrixMode(GL_MODELVIEW);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(45, 1, 1, maxGridSize * 2);
+	glMatrixMode(GL_MODELVIEW);
 }
 
 // Main function: entry point and initialization
@@ -259,7 +297,7 @@ int main(int argc, char ** argv)
 
 	// GLUT initialization
 	glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DEPTH);
 
 	// Set window dimensions to constant size
 	glutInitWindowSize(windowSize, windowSize);
@@ -270,8 +308,6 @@ int main(int argc, char ** argv)
 	// Create window for displaying grid and moving robot
 	glutCreateWindow("3GC3 - Assignment 3");
 
-	// Set coordinate system 
-
 	// I/O function bindings
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
@@ -279,9 +315,9 @@ int main(int argc, char ** argv)
 	glutSpecialFunc(special);
 
 	// Enable backface culling
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
 
 	// Main program loop
 	glutMainLoop();
