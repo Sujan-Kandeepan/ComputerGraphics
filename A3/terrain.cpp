@@ -46,6 +46,42 @@ WireframeMode wireframeMode = SOLID;
 enum StripsMode { SQUARES, TRIANGLES };
 StripsMode stripsMode = SQUARES;
 
+// Enum definition and global variable for lighting mode
+enum LightingMode { SOURCE1, SOURCE2, OFF };
+LightingMode lightingMode = SOURCE1;
+
+// Calculate polygon face normal given 3 x/z coordinates
+float * calculateNormal(int x1, int z1,
+	int x2, int z2, int x3, int z3)
+{
+	// Vector a from point 2 to point 3
+	static float a[] =
+	{
+		x3 - x2,
+		heightMap[x3][z3] - heightMap[x2][z2],
+		z3 - z2
+	};
+
+	// Vector b from point 2 to point 1
+	static float b[] =
+	{
+		x1 - x2,
+		heightMap[x1][z1] - heightMap[x2][z2],
+		z1 - z2
+	};
+
+	// Vector c = a x b
+	static float c[] =
+	{
+		a[1] * b[2] - a[2] * b[1],
+		a[2] * b[0] - a[0] * b[2],
+		a[0] * b[1] - a[1] * b[0]
+	};
+
+	// Return pointer to c
+	return c;
+}
+
 // Draw a vertex at a given location
 void drawVertex(int x, int z, int wireframe, int window)
 {
@@ -89,7 +125,9 @@ void drawSquareCell(int x, int z, int wireframe, int window)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	// Draw square counter-clockwise
+	float * normal = calculateNormal(x, z, x, z + 1, x + 1, z + 1);
 	glBegin(GL_QUADS);
+		glNormal3f(normal[0], normal[1], normal[2]);
 		drawVertex(x, z, wireframe, window);
 		drawVertex(x, z + 1, wireframe, window);
 		drawVertex(x + 1, z + 1, wireframe, window);
@@ -106,11 +144,19 @@ void drawTriangleCell(int x, int z, int wireframe, int window)
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// Draw two connected triangles counter-clockwise
+	// Draw first of two connected triangles counter-clockwise
+	float * normal = calculateNormal(x, z, x, z + 1, x + 1, z + 1);
 	glBegin(GL_TRIANGLES);
+		glNormal3f(normal[0], normal[1], normal[2]);
 		drawVertex(x, z, wireframe, window);
 		drawVertex(x, z + 1, wireframe, window);
 		drawVertex(x + 1, z + 1, wireframe, window);
+	glEnd();
+
+	// Draw second of two connected triangles counter-clockwise
+	normal = calculateNormal(x, z, x + 1, z + 1, x + 1, z);
+	glBegin(GL_TRIANGLES);
+		glNormal3f(normal[0], normal[1], normal[2]);
 		drawVertex(x, z, wireframe, window);
 		drawVertex(x + 1, z + 1, wireframe, window);
 		drawVertex(x + 1, z, wireframe, window);
@@ -188,7 +234,7 @@ void addCircle(float circleX, float circleZ,
 	}
 }
 
-// New terrain function: circles algorithm for new terrain
+// Generate new terrain using circles algorithm
 void newTerrain()
 {
 	// Variable declarations for circle dimensions/placement
@@ -226,6 +272,50 @@ void display()
 		0, 1, 0
 	);
 
+	// Set up first light source (top near left)
+	float pos0[] = { -1 * gridSize, gridSize, gridSize, 0.5 };
+	float amb0[] = { 1, 1, 1, 0.5 };
+	float dif0[] = { 0.5, 0.5, 0.5, 0.5 };
+	float spc0[] = { 1, 1, 1, 0.5 };
+	glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, amb0);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif0);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, spc0);
+
+	// Set up second light source (top far right)
+	float pos1[] = { gridSize, gridSize, -1 * gridSize, 0.5 };
+	float amb1[] = { 1, 1, 1, 0.5 };
+	float dif1[] = { 0.5, 0.5, 0.5, 0.5 };
+	float spc1[] = { 1, 1, 1, 0.5 };
+	glLightfv(GL_LIGHT1, GL_POSITION, pos1);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, amb1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, dif1);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, spc1);
+
+	// Enable lighting at first light source
+	if (lightingMode == SOURCE1)
+	{
+		glEnable(GL_LIGHTING);
+		glDisable(GL_LIGHT1);
+		glEnable(GL_LIGHT0);
+	}
+
+	// Enable lighting at second light source
+	if (lightingMode == SOURCE2)
+	{
+		glEnable(GL_LIGHTING);
+		glDisable(GL_LIGHT0);
+		glEnable(GL_LIGHT1);
+	}
+
+	// Disable lighting temporarily
+	if (lightingMode == OFF)
+	{
+		glDisable(GL_LIGHTING);
+		glDisable(GL_LIGHT0);
+		glDisable(GL_LIGHT1);
+	}
+
 	// Rotate before displaying terrain
 	glRotatef(cameraRotationX, 1, 0, 0);
 	glRotatef(cameraRotationY, 0, 1, 0);
@@ -253,7 +343,7 @@ void keyboard(unsigned char key, int x, int y)
 		// Toggle lighting
 		case 'l':
 		case 'L':
-			// TODO: implement lighting
+			lightingMode = (LightingMode)((lightingMode + 1) % 3);
 			break;
 
 		// Quit program
@@ -379,7 +469,7 @@ int main(int argc, char ** argv)
 	// Display keyboard controls to command line
 	printf("Keyboard controls (both windows):\n"
 		" - Arrows -> Move camera\n"
-		" - L      -> Toggle lighting\n"
+		" - L      -> Toggle lighting (2 sources or off)\n"
 		" - Q/Esc  -> Quit program\n"
 		" - R      -> Reset terrain\n"
 		" - S      -> Toggle strips (polygon) mode\n"
@@ -414,6 +504,10 @@ int main(int argc, char ** argv)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+
+	// Enable lighting with color
+	glEnable(GL_LIGHTING);
+	glEnable(GL_COLOR_MATERIAL);
 
 	// Set dimensions and position of second window
 	glutInitWindowSize(windowSize, windowSize);
