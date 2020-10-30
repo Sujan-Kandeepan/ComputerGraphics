@@ -508,6 +508,7 @@ int main(int argc, char ** argv)
 	// Enable lighting with color
 	glEnable(GL_LIGHTING);
 	glEnable(GL_COLOR_MATERIAL);
+	glEnable(GL_NORMALIZE);
 
 	// Set dimensions and position of second window
 	glutInitWindowSize(windowSize, windowSize);
