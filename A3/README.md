@@ -8,6 +8,7 @@ Run `make` to compile `terrain.cpp` and run `Terrain`.
 
 - Display 2D terrain overview (option 3).
 - Terrain modification (option 4).
+- Shading (option 5).
 
 ## External Resources Referenced
 

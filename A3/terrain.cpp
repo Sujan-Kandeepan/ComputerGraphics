@@ -32,6 +32,13 @@ static int gridSize = 0;
 // Height map for points on terrain
 float heightMap[maxGridSize][maxGridSize];
 
+// Normal map for squares, triangles pointing to x and z axes, and vertices
+float squareNormals[maxGridSize][maxGridSize][3];
+float triangleXNormals[maxGridSize][maxGridSize][3];
+float triangleZNormals[maxGridSize][maxGridSize][3];
+float vertexNormals[maxGridSize][maxGridSize][3];
+enum NormalType { SQUARE, TRIANGLEX, TRIANGLEZ, VERTEX };
+
 // Global value for tallest height in current terrain
 static float greatestHeight;
 
@@ -50,9 +57,13 @@ StripsMode stripsMode = SQUARES;
 enum LightingMode { SOURCE1, SOURCE2, OFF };
 LightingMode lightingMode = SOURCE1;
 
+// Enum definition and global variable for lighting mode
+enum ShadingMode { FLAT, GOURAUD };
+ShadingMode shadingMode = FLAT;
+
 // Calculate polygon face normal given 3 x/z coordinates
-float * calculateNormal(int x1, int z1,
-	int x2, int z2, int x3, int z3)
+void calculateFaceNormal(int x1, int z1, int x2, int z2,
+	int x3, int z3, NormalType n)
 {
 	// Vector a from point 2 to point 3
 	static float a[] =
@@ -78,8 +89,127 @@ float * calculateNormal(int x1, int z1,
 		a[0] * b[1] - a[1] * b[0]
 	};
 
-	// Return pointer to c
-	return c;
+	// Assign to respective normal map
+	if (n == SQUARE)
+		for (int i = 0; i < 3; i++)
+			squareNormals[x1][z1][i] = c[i];
+	if (n == TRIANGLEX)
+		for (int i = 0; i < 3; i++)
+			triangleXNormals[x1][z1][i] = c[i];
+	if (n == TRIANGLEZ)
+		for (int i = 0; i < 3; i++)
+			triangleZNormals[x1][z1][i] = c[i];
+}
+
+// Precompute normals depending on polygons and shading
+void precomputeNormals()
+{
+	// Compute all face normals first
+	for (int x = 0; x < gridSize - 1; x++)
+	{
+		for (int z = 0; z < gridSize - 1; z++)
+		{
+			calculateFaceNormal(x, z, x, z + 1, x + 1, z + 1, SQUARE);
+			calculateFaceNormal(x, z, x + 1, z + 1, x + 1, z, TRIANGLEX);
+			calculateFaceNormal(x, z, x, z + 1, x + 1, z + 1, TRIANGLEZ);
+		}
+	}
+
+	// Skip vertex normal computation for flat shading
+	if (shadingMode == FLAT)
+		return;
+
+	// Compute vertex normals, assume upward face normals if outside grid
+	for (int x = 0; x < gridSize; x++)
+	{
+		for (int z = 0; z < gridSize; z++)
+		{
+			// Accumulate normal, will be normalized by GL_NORMALIZE
+			float normal[3] = { 0, 0, 0 };
+
+			// Different faces for squares
+			if (stripsMode == SQUARES)
+			{
+				// Square face at (x - 1, z - 1)
+				if (x >= 1 && z >= 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += squareNormals[x - 1][z - 1][i];
+				else
+					normal[1] += 1;
+
+				// Square face at (x, z - 1)
+				if (x < gridSize - 1 && z >= 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += squareNormals[x][z - 1][i];
+				else
+					normal[1] += 1;
+
+				// Square face at (x - 1, z)
+				if (x >= 1 && z < gridSize - 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += squareNormals[x - 1][z][i];
+				else
+					normal[1] += 1;
+
+				// Square face at (x, z)
+				if (x < gridSize - 1 && z < gridSize - 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += squareNormals[x][z][i];
+				else
+					normal[1] += 1;
+			}
+
+			//  Different faces for triangles
+			if (stripsMode == TRIANGLES)
+			{
+				// Triangle pointing to x axis at (x - 1, z - 1)
+				if (x >= 1 && z >= 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleXNormals[x - 1][z - 1][i];
+				else
+					normal[1] += 1;
+
+				// Triangle pointing to z axis at (x - 1, z - 1)
+				if (x >= 1 && z >= 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleZNormals[x - 1][z - 1][i];
+				else
+					normal[1] += 1;
+
+				// Triangle pointing to z axis at (x, z - 1)
+				if (x < gridSize - 1 && z >= 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleZNormals[x][z - 1][i];
+				else
+					normal[1] += 1;
+
+				// Triangle pointing to x axis at (x - 1, z)
+				if (x >= 1 && z < gridSize - 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleXNormals[x - 1][z][i];
+				else
+					normal[1] += 1;
+
+				// Triangle pointing to x axis at (x, z)
+				if (x < gridSize - 1 && z < gridSize - 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleXNormals[x][z][i];
+				else
+					normal[1] += 1;
+
+				// Triangle pointing to z axis at (x, z)
+				if (x < gridSize - 1 && z < gridSize - 1)
+					for (int i = 0; i < 3; i++)
+						normal[i] += triangleZNormals[x][z][i];
+				else
+					normal[1] += 1;
+			}
+
+			// Set value in vertex normal map
+			for (int i = 0; i < 3; i++)
+				vertexNormals[x][z][i] = normal[i];
+		}
+	}
 }
 
 // Draw a vertex at a given location
@@ -101,6 +231,10 @@ void drawVertex(int x, int z, int wireframe, int window)
 				+ highColor[1] * (height)),
 			(lowColor[2] * (1 - height)
 				+ highColor[2] * (height)));
+
+	// Set vertex normal to precomputed value for Gouraud shading
+	if (shadingMode == GOURAUD)
+		glNormal3fv(vertexNormals[x][z]);
 
 	// Draw vertex for first window (slightly higher for wireframe)
 	if (window == 1)
@@ -124,10 +258,10 @@ void drawSquareCell(int x, int z, int wireframe, int window)
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// Draw square counter-clockwise
-	float * normal = calculateNormal(x, z, x, z + 1, x + 1, z + 1);
+	// Draw square with calculated normals
 	glBegin(GL_QUADS);
-		glNormal3f(normal[0], normal[1], normal[2]);
+		if (shadingMode == FLAT)
+			glNormal3fv(squareNormals[x][z]);
 		drawVertex(x, z, wireframe, window);
 		drawVertex(x, z + 1, wireframe, window);
 		drawVertex(x + 1, z + 1, wireframe, window);
@@ -144,28 +278,30 @@ void drawTriangleCell(int x, int z, int wireframe, int window)
 	else
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	// Draw first of two connected triangles counter-clockwise
-	float * normal = calculateNormal(x, z, x, z + 1, x + 1, z + 1);
+	// Draw first of two connected triangles with calculated normals
 	glBegin(GL_TRIANGLES);
-		glNormal3f(normal[0], normal[1], normal[2]);
-		drawVertex(x, z, wireframe, window);
-		drawVertex(x, z + 1, wireframe, window);
-		drawVertex(x + 1, z + 1, wireframe, window);
-	glEnd();
-
-	// Draw second of two connected triangles counter-clockwise
-	normal = calculateNormal(x, z, x + 1, z + 1, x + 1, z);
-	glBegin(GL_TRIANGLES);
-		glNormal3f(normal[0], normal[1], normal[2]);
+		if (shadingMode == FLAT)
+			glNormal3fv(triangleXNormals[x][z]);
 		drawVertex(x, z, wireframe, window);
 		drawVertex(x + 1, z + 1, wireframe, window);
 		drawVertex(x + 1, z, wireframe, window);
+	glEnd();
+
+	// Draw second of two connected triangles with calculated normals
+	glBegin(GL_TRIANGLES);
+		if (shadingMode == FLAT)
+			glNormal3fv(triangleZNormals[x][z]);
+		drawVertex(x, z, wireframe, window);
+		drawVertex(x, z + 1, wireframe, window);
+		drawVertex(x + 1, z + 1, wireframe, window);
 	glEnd();
 }
 
 // Draw terrain on first and second window
 void drawTerrain(int window)
 {
+	precomputeNormals();
+
 	// Iterate over all points first time
 	for (int x = 0; x < gridSize - 1; x++)
 	{
@@ -246,7 +382,8 @@ void newTerrain()
 			heightMap[x][z] = 0;
 
 	// Iterate number of times given by grid size
-	for (int i = 0; i < gridSize; i++) {
+	for (int i = 0; i < gridSize; i++)
+	{
 		// Randomize circle dimensions/placement
 		circleX = rand() % gridSize;
 		circleZ = rand() % gridSize;
@@ -316,6 +453,15 @@ void display()
 		glDisable(GL_LIGHT1);
 	}
 
+	// Set to flat shading if selected
+	if (shadingMode == FLAT)
+		glShadeModel(GL_FLAT);
+
+
+	// Set to Gouraud shading if selected
+	if (shadingMode == GOURAUD)
+		glShadeModel(GL_SMOOTH);
+
 	// Rotate before displaying terrain
 	glRotatef(cameraRotationX, 1, 0, 0);
 	glRotatef(cameraRotationY, 0, 1, 0);
@@ -340,6 +486,12 @@ void keyboard(unsigned char key, int x, int y)
 	// Perform action depending on character received
 	switch (key)
 	{
+		// Toggle shading
+		case 'g':
+		case 'G':
+			shadingMode = (ShadingMode)(!shadingMode);
+			break;
+
 		// Toggle lighting
 		case 'l':
 		case 'L':
@@ -469,6 +621,7 @@ int main(int argc, char ** argv)
 	// Display keyboard controls to command line
 	printf("Keyboard controls (both windows):\n"
 		" - Arrows -> Move camera\n"
+		" - G      -> Toggle shading (flat or Gouraud)\n"
 		" - L      -> Toggle lighting (2 sources or off)\n"
 		" - Q/Esc  -> Quit program\n"
 		" - R      -> Reset terrain\n"
