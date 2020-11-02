@@ -15,11 +15,17 @@ GLdouble eye[] = { 0, 0, 10 };
 GLdouble lookAt[] = { 0, 0, 0 };
 GLdouble up[] = { 0, 1, 0 };
 
+GLfloat l_pos[] = { -15, 5, 5, 1 };
+GLfloat l_amb[] = { 0, 0, 0, 1 };
+GLfloat l_dif[] = { 0.7, 0.7, 0.7, 1 };
+GLfloat l_spc[] = { 0.5, 0.5, 0.5, 1 };
 
+GLfloat m_amb[] = { 0, 0, 0, 1 };
+GLfloat m_dif[] = { 1, 0, 0, 1 };
+GLfloat m_spc[] = { 0.5, 0.5, 0.5, 1 };
+GLfloat m_shi = 10;
 
 void display(void) {
- 
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
     gluLookAt(
@@ -28,7 +34,15 @@ void display(void) {
         up[0], up[1], up[2]
     );
 
-   
+    glLightfv(GL_LIGHT0, GL_POSITION, l_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, l_amb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, l_dif);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, l_spc);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, m_amb);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, m_dif);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, m_spc);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, m_shi);
+
     glutSolidSphere(2, 100, 100);
 
     glFlush();
@@ -59,12 +73,14 @@ int main(int argc, char** argv) {
     glutKeyboardFunc(handleKeyboard);
     glutReshapeFunc(handleReshape);
     glutDisplayFunc(display);
-
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glShadeModel(GL_SMOOTH);
+
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
 
     glutMainLoop();
 
