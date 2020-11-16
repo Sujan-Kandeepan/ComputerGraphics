@@ -85,10 +85,28 @@ unsigned int cubeTriangles[12][3] = {
 };
 
 // Define cube normals here, should be in similar format as cubeTriangles above
+int cubeNormals[12][3];
+
+void calculateFaceNormal(int index, float x1, float y1, float z1,
+    float x2, float y2, float z2, float x3, float y3, float z3)
+{
+    float e1[3] = { x1 - x2, y1 - y2, z1 - z2 };
+    float e2[3] = { x3 - x2, y3 - y2, z3 - z2 };
+    float normal[3] =
+    {
+        e2[1] * e1[2] - e2[2] * e1[1],
+        e2[2] * e1[0] - e2[0] * e1[2],
+        e2[0] * e1[1] - e2[1] * e1[0]
+    };
+    float length = sqrt(pow(normal[0], 2) + pow(normal[1], 2) + pow(normal[2], 2));
+
+    cubeNormals[index][0] = (int)(normal[0] / length);
+    cubeNormals[index][1] = (int)(normal[1] / length);
+    cubeNormals[index][2] = (int)(normal[2] / length);
+}
 
 void drawCube() {
     glFrontFace(GL_CCW);
-
     glBegin(GL_TRIANGLES);
     // Render each triangle
     for (int i = 0; i < 12; i++) {
@@ -96,7 +114,20 @@ void drawCube() {
         // We only need six normals since each face of the cube is composed of
         // two triangles.
 		// insert code here!
+        calculateFaceNormal(i,
+            cubeVertices[cubeTriangles[i][0]][0],
+            cubeVertices[cubeTriangles[i][0]][1],
+            cubeVertices[cubeTriangles[i][0]][2],
+            cubeVertices[cubeTriangles[i][1]][0],
+            cubeVertices[cubeTriangles[i][1]][1],
+            cubeVertices[cubeTriangles[i][1]][2],
+            cubeVertices[cubeTriangles[i][2]][0],
+            cubeVertices[cubeTriangles[i][2]][1],
+            cubeVertices[cubeTriangles[i][2]][2]
+        );
+
         // Render the three vertices of each triangle
+        glNormal3iv(cubeNormals[i]);
         for (int j = 0; j < 3; j++) {
             glVertex3fv(cubeVertices[cubeTriangles[i][j]]);
         }
@@ -128,13 +159,27 @@ void display(void) {
     glPushMatrix();
         glTranslatef(0, 2, 0);
 		// insert teapot + culling init here
+        glPushMatrix();
+            setOutlineMaterials();
+            glScalef(1.05, 1.05, 1.05);
+            glCullFace(GL_FRONT);
+            drawTeapot(1);
+        glPopMatrix();
         setMaterials();
+        glCullFace(GL_BACK);
         drawTeapot(1);
     glPopMatrix();
 
 
-   setMaterials();
-   drawCube();
+    glPushMatrix();
+        setOutlineMaterials();
+        glScalef(1.05, 1.05, 1.05);
+        glCullFace(GL_FRONT);
+        drawCube();
+    glPopMatrix();
+    setMaterials();
+    glCullFace(GL_BACK);
+    drawCube();
 	// insert cube + transformation + culling init here
     glFlush();
 }
@@ -176,6 +221,7 @@ int main(int argc, char** argv) {
 
     glFrontFace(GL_CCW);
 	// insert culling setup here
+    glEnable(GL_CULL_FACE);
 
     glShadeModel(GL_SMOOTH);
 
