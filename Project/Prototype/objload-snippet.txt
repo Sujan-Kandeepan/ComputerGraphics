@@ -1,0 +1,26 @@
+string file1 = "rocket.obj"; 
+string file2 = "coin.obj";
+string file3 = "minion.obj";
+string file4 = "rock1.obj";
+string file5 = "rock2.obj";
+string file6 = "bomb.obj";
+objLoader *rocket = NULL;
+objLoader *coin = NULL;
+objLoader *minion = NULL;
+objLoader *rock1 = NULL;
+objLoader *rock2 = NULL;
+objLoader *bomb = NULL;
+- then the following for where we want the object to be drawn 
+rocket->drawObj(); 
+coin->drawObj();
+minion->drawObj();
+rock1->drawObj();
+rock2->drawObj();
+bomb->drawObj();
+- and in the main of course we add 
+rocket = new objLoader(file1);
+coin = new objLoader(file2);
+minion = new objLoader(file3);
+rock1 = new objLoader(file4);
+rock2 = new objLoader(file5);
+bomb = new objLoader(file6);
