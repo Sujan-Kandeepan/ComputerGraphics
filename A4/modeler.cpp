@@ -112,9 +112,9 @@ struct Object
 	{
 		// TODO: implement object rendering
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmb);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDif);
-	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpc);
-	    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShiny);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDif);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpc);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShiny);
 		glPushMatrix();
 			glScalef(scale[X], scale[Y], scale[Z]);
 			glRotatef(rotation[A], rotation[X], rotation[Y], rotation[Z]);
