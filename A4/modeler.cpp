@@ -28,6 +28,14 @@ int selected = -1;
 const float axisLength = 100;
 const float initialZoom = 30;
 
+// Rotation for visualization (temporary)
+float rotation = 0;
+void rotate(int val)
+{
+	rotation++;	
+	glutTimerFunc(1000 / 60, rotate, 0);
+}
+
 // Set temporary plain color for objects to be drawn
 void plainColorMaterial(float r, float g, float b)
 {
@@ -117,8 +125,9 @@ void display()
 	glEnd();
 
 	// Iterate through linear scene graph and draw objects
+	objects.at(0).setRotation(30, 30 + rotation, 30);
 	for (int i = 0; i < objects.size(); i++)
-		objects.at(i).drawObject();
+		objects.at(i).drawObject(1);
 
 	// Flushes buffered commands to display
 	glFlush();
@@ -169,10 +178,10 @@ int main(int argc, char ** argv)
 	glutCreateWindow("3GC3 - Assignment 4");
 
 	// Temporary object for testing
-	Object o = Object(TEAPOT);
+	Object o = Object(ICOSAHEDRON);
 	o.setPosition(10, 10, 10);
 	o.setRotation(30, 30, 30);
-	o.setScale(2, 2, 2);
+	o.setScale(3, 3, 3);
 	o.setMaterialAmb(0.3, 0.2, 0.1, 1);
 	o.setMaterialDif(0.8, 0.7, 0.5, 1);
 	o.setMaterialSpc(0.2, 0.2, 0.1, 1);
@@ -193,6 +202,7 @@ int main(int argc, char ** argv)
 	glCullFace(GL_BACK);
 
 	// Main program loop
+	glutTimerFunc(1000 / 60, rotate, 0);
 	glutMainLoop();
 
 	// Exit normally

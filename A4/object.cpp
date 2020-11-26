@@ -49,7 +49,7 @@ struct Object
 	// Constructor
 	Object(ObjectType o)
 	{
-		this->setPosition(1, 1, 1);
+		this->setPosition(0.5, 0.5, 0.5);
 		this->setRotation(0, 0, 0);
 		this->setScale(1, 1, 1);
 		this->setMaterialAmb(0.25, 0.25, 0.25, 1);
@@ -110,14 +110,8 @@ struct Object
 		materialSpc[A] = a;
 	}
 
-	// Calculate bounding box coordinates
-	void calculateBounds()
-	{
-		// TODO: implement bounding box calculation
-	}
-
-	// Draw object of correct type with transformations/material
-	void drawObject()
+	// Draw object based on properties + bounding box if selected
+	void drawObject(int selected = 0)
 	{
 		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmb);
 		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDif);
@@ -135,41 +129,161 @@ struct Object
 				glutSolidCube(1);
 				break;
 			case SPHERE:
-				glutSolidSphere(1, 100, 100);
+				glutSolidSphere(0.5, 100, 100);
 				break;
 			case CONE:
-				glutSolidCone(1, 1, 100, 100);
+				glPushMatrix();
+					glTranslatef(0, 0, -0.5);
+					glutSolidCone(0.5, 1, 100, 100);
+				glPopMatrix();
 				break;
 			case CYLINDER:
-				glutSolidCylinder(1, 1, 100, 100);
+				glPushMatrix();
+					glTranslatef(0, 0, -0.5);
+					glutSolidCylinder(0.5, 1, 100, 100);
+				glPopMatrix();
 				break;
 			case TORUS:
-				glutSolidTorus(0.5, 1, 100, 100);
+				glutSolidTorus(0.2, 0.35, 100, 100);
 				break;
 			case TEAPOT:
 				glFrontFace(GL_CW);
-				glutSolidTeapot(1);
+				glutSolidTeapot(0.5);
 				glFrontFace(GL_CCW);
 				break;
 			case TETRAHEDRON:
-				glutSolidTetrahedron();
+				glPushMatrix();
+					glTranslatef(-0.25, -0.125, 0);
+					glScalef(0.75, 0.75, 0.75);
+					glutSolidTetrahedron();
+				glPopMatrix();
 				break;
 			case OCTAHEDRON:
-				glutSolidOctahedron();
+				glPushMatrix();
+					glScalef(0.6, 0.6, 0.6);
+					glutSolidOctahedron();
+				glPopMatrix();
 				break;
 			case DODECAHEDRON:
-				glutSolidDodecahedron();
+				glPushMatrix();
+					glScalef(0.3, 0.3, 0.3);
+					glutSolidDodecahedron();
+				glPopMatrix();
 				break;
 			case ICOSAHEDRON:
-				glutSolidIcosahedron();
+				glPushMatrix();
+					glScalef(0.6, 0.6, 0.6);
+					glutSolidIcosahedron();
+				glPopMatrix();
 				break;
 			}
+			if (selected)
+				this->drawBounds();
 		glPopMatrix();
 	}
 
 	// Draw bounding box outline around object
 	void drawBounds()
 	{
-		// TODO: implement bounding box drawing
+		// Set to outline and disable culling
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDisable(GL_CULL_FACE);
+
+		// Define green color material for outline
+		float green[4] = { 0, 1, 0, 1 };
+		float zero[4] = { 0, 0, 0, 0 };
+		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, zero);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, zero);
+		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
+
+		// Define unit square
+		float square[8][3] =
+		{
+			{ -0.5, -0.5, -0.5 },
+			{  0.5, -0.5, -0.5 },
+			{ -0.5,  0.5, -0.5 },
+			{  0.5,  0.5, -0.5 },
+			{ -0.5, -0.5,  0.5 },
+			{  0.5, -0.5,  0.5 },
+			{ -0.5,  0.5,  0.5 },
+			{  0.5,  0.5,  0.5 }
+		};
+
+		// Bottom two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
+			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
+		glEnd();
+
+		// Top two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_TOP_LEFT]);
+			glVertex3fv(square[FRONT_TOP_LEFT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_TOP_LEFT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+			glVertex3fv(square[BACK_TOP_RIGHT]);
+		glEnd();
+
+		// Back two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
+			glVertex3fv(square[BACK_TOP_RIGHT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[BACK_TOP_RIGHT]);
+			glVertex3fv(square[BACK_TOP_LEFT]);
+		glEnd();
+
+		// Front two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+			glVertex3fv(square[FRONT_TOP_LEFT]);
+		glEnd();
+
+		// Left two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[BACK_TOP_LEFT]);
+			glVertex3fv(square[FRONT_TOP_LEFT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_LEFT]);
+			glVertex3fv(square[FRONT_TOP_LEFT]);
+			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
+		glEnd();
+
+		// Right two triangles
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
+			glVertex3fv(square[BACK_TOP_RIGHT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
+			glVertex3fv(square[FRONT_TOP_RIGHT]);
+			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
+		glEnd();
+
+		// Reset polygon mode and culling
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_CULL_FACE);
 	}
 };
