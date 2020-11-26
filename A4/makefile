@@ -36,8 +36,10 @@ run: $(PROGRAM_NAME)
 #ie. boilerplateClass.o and yourFile.o
 #make will automatically know that the objectfile needs to be compiled
 #form a cpp source file and find it itself :)
-$(PROGRAM_NAME): modeler.o
+$(PROGRAM_NAME): object.o modeler.o
 	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+modeler.o: object.o
 
 clean:
 	$(RM) *.o $(PROGRAM_NAME)$(EXEEXT)

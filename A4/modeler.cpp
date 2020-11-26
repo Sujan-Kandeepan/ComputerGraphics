@@ -15,154 +15,31 @@
 #  include <GL/freeglut.h>
 #endif
 
-// Enum for supported object types
-enum ObjectType
-{
-	CUBE, SPHERE, CONE, CYLINDER, TORUS, TEAPOT,
-	TETRAHEDRON, OCTAHEDRON, DODECAHEDRON, ICOSAHEDRON
-};
+// Object type imports
+#include "object.cpp"
 
-// Enum for bounding box indices (better readability)
-enum BoxCorners
-{
-	BACK_BOTTOM_LEFT, BACK_BOTTOM_RIGHT, BACK_TOP_LEFT, BACK_TOP_RIGHT,
-	FRONT_BOTTOM_LEFT, FRONT_BOTTOM_RIGHT, FRONT_TOP_LEFT, FRONT_TOP_RIGHT
-};
-
-// Enum for coordinates (better readability)
-enum Coordinates { X, Y, Z, A };
-
-// Struct for objects
-struct Object
-{
-	// Object properties
-	float position[3];
-	float rotation[4];
-	float scale[3];
-	float materialAmb[4];
-	float materialDif[4];
-	float materialSpc[4];
-	float materialShiny;
-	ObjectType objectType;
-	float bounds[8][3];
-
-	// Constructor
-	Object(){}
-
-	// Set position (x, y, z) values
-	void setPosition(float x, float y, float z)
-	{
-		position[X] = x;
-		position[Y] = y;
-		position[Z] = z;
-	}
-
-	// Set rotation (x, y, z) and angle values
-	void setRotation(float x, float y, float z, float a)
-	{
-		rotation[X] = x;
-		rotation[Y] = y;
-		rotation[Z] = z;
-		rotation[A] = a;
-	}
-
-	// Set scale (x, y, z) values
-	void setScale(float x, float y, float z)
-	{
-		scale[X] = x;
-		scale[Y] = y;
-		scale[Z] = z;
-	}
-
-	// Set material ambience (x, y, z, a) values
-	void setMaterialAmb(float x, float y, float z, float a)
-	{
-		materialAmb[X] = x;
-		materialAmb[Y] = y;
-		materialAmb[Z] = z;
-		materialAmb[A] = a;
-	}
-
-	// Set material diffuse (x, y, z, a) values
-	void setMaterialDif(float x, float y, float z, float a)
-	{
-		materialDif[X] = x;
-		materialDif[Y] = y;
-		materialDif[Z] = z;
-		materialDif[A] = a;
-	}
-
-	// Set material specular (x, y, z, a) values
-	void setMaterialSpc(float x, float y, float z, float a)
-	{
-		materialSpc[X] = x;
-		materialSpc[Y] = y;
-		materialSpc[Z] = z;
-		materialSpc[A] = a;
-	}
-
-	// Calculate bounding box coordinates
-	void calculateBounds()
-	{
-		// TODO: implement bounding box calculation
-	}
-
-	// Draw object of correct type with transformations/material
-	void drawObject()
-	{
-		// TODO: implement object rendering
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmb);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDif);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpc);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShiny);
-		glPushMatrix();
-			glScalef(scale[X], scale[Y], scale[Z]);
-			glRotatef(rotation[A], rotation[X], rotation[Y], rotation[Z]);
-			glTranslatef(position[X], position[Y], position[Z]);
-			switch (objectType)
-			{
-			case CUBE:
-				glutSolidCube(1);
-				break;
-			case SPHERE:
-				glutSolidSphere(1, 10, 10);
-				break;
-			case CONE:
-				glutSolidCone(1, 1, 10, 10);
-				break;
-			case CYLINDER:
-				glutSolidCone(1, 1, 10, 10); // ???
-				break;
-			case TORUS:
-				glutSolidTorus(0.5, 1, 10, 10);
-				break;
-			case TEAPOT:
-				glutSolidTeapot(1);
-				break;
-			case TETRAHEDRON:
-				glutSolidTetrahedron();
-				break;
-			case OCTAHEDRON:
-				glutSolidOctahedron();
-				break;
-			case DODECAHEDRON:
-				glutSolidDodecahedron();
-				break;
-			case ICOSAHEDRON:
-				glutSolidIcosahedron();
-				break;
-			}
-		glPopMatrix();
-	}
-
-	// Draw bounding box outline around object
-	void drawBounds()
-	{
-		// TODO: implement bounding box drawing
-	}
-};
-
+// Linear scene graph of objects
 std::vector<Object> objects;
+
+// Index of selected object
+int selected = -1;
+
+// Constant values for display
+const float axisLength = 100;
+const float initialZoom = 30;
+
+// Set temporary plain color for objects to be drawn
+void plainColorMaterial(float r, float g, float b)
+{
+	float colorAmb[4] = {r, g, b, 1};
+	float colorDif[4] = {r, g, b, 1};
+	float colorSpc[4] = {r, g, b, 1};
+	float colorShiny = 1;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, colorAmb);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colorDif);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, colorSpc);
+	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, colorShiny);
+}
 
 // Display function: renders display area
 void display()
@@ -173,38 +50,75 @@ void display()
 
 	// Position camera away from and looking at origin
 	gluLookAt(
-		10, 10, 10,
+		initialZoom, initialZoom / 2, initialZoom,
 		0, 0, 0,
 		0, 1, 0
 	);
 
 	// Temporary lighting setup
-	float pos[4] = {10, 10, 10, 1};
-	float amb[4] = {1, 1, 1, 1};
-	float dif[4] = {0, 0, 0, 1};
-	float spc[4] = {0, 0, 0, 1};
+	float pos[4] = {axisLength, axisLength, axisLength, 1};
+	float amb[4] = {0.5, 0.5, 0.5, 1};
+	float dif[4] = {0.5, 0.5, 0.5, 1};
+	float spc[4] = {0.5, 0.5, 0.5, 1};
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
 	glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
 
-	// Temporary object for testing
-	Object o = Object();
-	o.setPosition(0, 0, 0);
-	o.setRotation(0, 0, 0, 0);
-	o.setScale(1, 1, 1);
-	o.setMaterialAmb(0.5, 0.5, 0.5, 1);
-	o.setMaterialDif(0, 0, 0, 1);
-	o.setMaterialSpc(0, 0, 0, 1);
-	o.materialShiny = 1;
-	o.objectType = ICOSAHEDRON;
-	objects.push_back(o);
+	// y/z plane on boundary of display area
+	plainColorMaterial(0.45, 0.5, 0.5);
+	glNormal3f(1, 0, 0);
+	glBegin(GL_QUADS);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0, axisLength, 0);
+		glVertex3f(0, axisLength, axisLength);
+		glVertex3f(0, 0, axisLength);
+	glEnd();
+
+	// x/y plane on boundary of display area
+	plainColorMaterial(0.5, 0.5, 0.45);
+	glNormal3f(0, 0, 1);
+	glBegin(GL_QUADS);
+		glVertex3f(0, 0, 0);
+		glVertex3f(axisLength, 0, 0);
+		glVertex3f(axisLength, axisLength, 0);
+		glVertex3f(0, axisLength, 0);
+	glEnd();
+
+	// x/z plane on boundary of display area
+	plainColorMaterial(0.5, 0.45, 0.5);
+	glNormal3f(0, 1, 0);
+	glBegin(GL_QUADS);
+		glVertex3f(0, 0, 0);
+		glVertex3f(0, 0, axisLength);
+		glVertex3f(axisLength, 0, axisLength);
+		glVertex3f(axisLength, 0, 0);
+	glEnd();
+
+	// x axis line separating planes
+	plainColorMaterial(0.35, 0, 0);
+	glBegin(GL_LINES);
+		glVertex3f(0.1, 0.1, 0.1);
+		glVertex3f(axisLength, 0.1, 0.1);
+	glEnd();
+
+	// y axis line separating planes
+	plainColorMaterial(0, 0.35, 0);
+	glBegin(GL_LINES);
+		glVertex3f(0.1, 0.1, 0.1);
+		glVertex3f(0.1, axisLength, 0.1);
+	glEnd();
+
+	// z axis line separating planes
+	plainColorMaterial(0, 0, 0.35);
+	glBegin(GL_LINES);
+		glVertex3f(0.1, 0.1, 0.1);
+		glVertex3f(0.1, 0.1, axisLength);
+	glEnd();
 
 	// Iterate through linear scene graph and draw objects
 	for (int i = 0; i < objects.size(); i++)
-	{
 		objects.at(i).drawObject();
-	}
 
 	// Flushes buffered commands to display
 	glFlush();
@@ -234,7 +148,7 @@ void reshape(int w, int h)
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45, 1, 1, 25);
+	gluPerspective(45, 1, 1, initialZoom * 2);
 	glMatrixMode(GL_MODELVIEW);
 }
 
@@ -253,6 +167,16 @@ int main(int argc, char ** argv)
 
 	// Create window for displaying modeler
 	glutCreateWindow("3GC3 - Assignment 4");
+
+	// Temporary object for testing
+	Object o = Object(TEAPOT);
+	o.setPosition(10, 10, 10);
+	o.setRotation(30, 30, 30);
+	o.setScale(2, 2, 2);
+	o.setMaterialAmb(0.3, 0.2, 0.1, 1);
+	o.setMaterialDif(0.8, 0.7, 0.5, 1);
+	o.setMaterialSpc(0.2, 0.2, 0.1, 1);
+	objects.push_back(o);
 
 	// I/O function bindings
 	glutDisplayFunc(display);
