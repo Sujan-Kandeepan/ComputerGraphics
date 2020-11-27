@@ -1,4 +1,5 @@
 // Standard C++ library imports
+#include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,11 +19,15 @@
 // Object type imports
 #include "object.cpp"
 
+// Enum for direction (used for keyboard actions)
+enum Direction { NONE, LEFT, RIGHT, DOWN, UP, BACK, FRONT };
+Direction direction = NONE;
+
 // Linear scene graph of objects
 std::vector<Object> objects;
 
 // Index of selected object
-int selected = -1;
+int selected = 0;
 
 // Constant values for display
 const float axisLength = 100;
@@ -47,6 +52,39 @@ void plainColorMaterial(float r, float g, float b)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colorDif);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, colorSpc);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, colorShiny);
+}
+
+// Nudge value in vector by given direction/amount with constraints
+void applyChange(float * vec, Direction direction,
+	float amount, float min = -FLT_MAX, float max = FLT_MAX)
+{
+	switch (direction)
+	{
+	case LEFT:
+		if (vec[X] >= min + amount)
+			vec[X] -= amount;
+		break;
+	case RIGHT:
+		if (vec[X] <= max - amount)
+			vec[X] += amount;
+		break;
+	case DOWN:
+		if (vec[Y] >= min + amount)
+			vec[Y] -= amount;
+		break;
+	case UP:
+		if (vec[Y] <= max - amount)
+			vec[Y] += amount;
+		break;
+	case BACK:
+		if (vec[Z] >= min + amount)
+			vec[Z] -= amount;
+		break;
+	case FRONT:
+		if (vec[Z] <= max - amount)
+			vec[Z] += amount;
+		break;
+	}
 }
 
 // Display function: renders display area
@@ -125,10 +163,8 @@ void display()
 	glEnd();
 
 	// Iterate through linear scene graph and draw objects
-	if (!objects.empty())
-		objects.at(0).setRotation(30, 30 + rotation, 30);
 	for (int i = 0; i < objects.size(); i++)
-		objects.at(i).drawObject(1);
+		objects.at(i).drawObject(selected == i);
 
 	// Flushes buffered commands to display
 	glFlush();
@@ -212,6 +248,7 @@ void keyboard(unsigned char key, int x, int y)
 	case 'r':
 	case 'R':
 		objects.clear();
+		selected = -1;
 		break;
 	}
 }
@@ -219,9 +256,6 @@ void keyboard(unsigned char key, int x, int y)
 // Special function: handle special keyboard controls
 void special(int key, int x, int y)
 {
-	enum Direction { NONE, LEFT, RIGHT, DOWN, UP, BACK, FRONT };
-	Direction direction = NONE;
-
 	// Assign direction from arrow key pressed
 	switch (key)
 	{
@@ -245,32 +279,34 @@ void special(int key, int x, int y)
 		break;
 	}
 
-	if (direction == NONE)
+	if (direction == NONE || selected == -1)
 		return;
 
 	if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 	{
-		printf("Rotate selected object\n");
+		applyChange(objects.at(selected).rotation, direction, 1);
 	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 	{
-		printf("Scale selected object\n");
+		applyChange(objects.at(selected).scale,
+			direction, 0.5, 0.5, axisLength);
 	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_SHIFT)
 	{
-		printf("Translate selected object\n");
+		applyChange(objects.at(selected).position,
+			direction, 1, 0, axisLength);
 	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT))
 	{
-		printf("Move first light source\n");
+		// TODO: create and move first light source
 	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT))
 	{
-		printf("Move second light source\n");
+		// TODO: create and move second light source
 	}
 	else
 	{
-		printf("Move camera\n");
+		// TODO: move camera
 	}
 }
 
@@ -280,7 +316,7 @@ void reshape(int w, int h)
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45, 1, 1, initialZoom * 2);
+	gluPerspective(45, 1, 1, axisLength * 2);
 	glMatrixMode(GL_MODELVIEW);
 }
 
