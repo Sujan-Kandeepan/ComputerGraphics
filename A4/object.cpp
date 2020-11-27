@@ -53,8 +53,8 @@ struct Object
 		this->setRotation(0, 0, 0);
 		this->setScale(1, 1, 1);
 		this->setMaterialAmb(0.25, 0.25, 0.25, 1);
-		this->setMaterialDif(0, 0, 0, 1);
-		this->setMaterialSpc(0, 0, 0, 1);
+		this->setMaterialDif(0.25, 0.25, 0.25, 1);
+		this->setMaterialSpc(0.25, 0.25, 0.25, 1);
 		this->materialShiny = 1;
 		this->objectType = o;
 	}
@@ -133,18 +133,23 @@ struct Object
 				break;
 			case CONE:
 				glPushMatrix();
+					glRotatef(-90, 1, 0, 0);
 					glTranslatef(0, 0, -0.5);
 					glutSolidCone(0.5, 1, 100, 100);
 				glPopMatrix();
 				break;
 			case CYLINDER:
 				glPushMatrix();
+					glRotatef(-90, 1, 0, 0);
 					glTranslatef(0, 0, -0.5);
 					glutSolidCylinder(0.5, 1, 100, 100);
 				glPopMatrix();
 				break;
 			case TORUS:
-				glutSolidTorus(0.2, 0.35, 100, 100);
+				glPushMatrix();
+					glRotatef(-90, 1, 0, 0);
+					glutSolidTorus(0.2, 0.35, 100, 100);
+				glPopMatrix();
 				break;
 			case TEAPOT:
 				glFrontFace(GL_CW);
@@ -153,6 +158,7 @@ struct Object
 				break;
 			case TETRAHEDRON:
 				glPushMatrix();
+					glRotatef(90, 0, 0, 1);
 					glTranslatef(-0.25, -0.125, 0);
 					glScalef(0.75, 0.75, 0.75);
 					glutSolidTetrahedron();
@@ -166,7 +172,7 @@ struct Object
 				break;
 			case DODECAHEDRON:
 				glPushMatrix();
-					glScalef(0.3, 0.3, 0.3);
+					glScalef(0.4, 0.4, 0.4);
 					glutSolidDodecahedron();
 				glPopMatrix();
 				break;
