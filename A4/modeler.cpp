@@ -32,7 +32,7 @@ const float initialZoom = 10;
 float rotation = 0;
 void rotate(int val)
 {
-	rotation++;	
+	rotation++;
 	glutTimerFunc(1000 / 60, rotate, 0);
 }
 
@@ -143,76 +143,76 @@ void keyboard(unsigned char key, int x, int y)
 	// Perform action depending on character received
 	switch (key)
 	{
-		// Add objects or choose material
-		case '1':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose first material\n");
-			else
-				objects.push_back(Object(CUBE));
-			break;
-		case '2':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose second material\n");
-			else
-				objects.push_back(Object(SPHERE));
-			break;
-		case '3':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose third material\n");
-			else
-				objects.push_back(Object(CONE));
-			break;
-		case '4':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose fourth material\n");
-			else
-				objects.push_back(Object(CYLINDER));
-			break;
-		case '5':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose fifth material\n");
-			else
-				objects.push_back(Object(TORUS));
-			break;
-		case '6':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose first texture\n");
-			else
-				objects.push_back(Object(TEAPOT));
-			break;
-		case '7':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose second texture\n");
-			else
-				objects.push_back(Object(TETRAHEDRON));
-			break;
-		case '8':
-			if (glutGetModifiers() & GLUT_ACTIVE_ALT)
-				printf("Choose third texture\n");
-			else
-				objects.push_back(Object(OCTAHEDRON));
-			break;
-		case '9':
-			if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
-				objects.push_back(Object(DODECAHEDRON));
-			break;
-		case '0':
-			if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
-				objects.push_back(Object(ICOSAHEDRON));
-			break;
+	// Add objects or choose material
+	case '1':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose first material\n");
+		else
+			objects.push_back(Object(CUBE));
+		break;
+	case '2':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose second material\n");
+		else
+			objects.push_back(Object(SPHERE));
+		break;
+	case '3':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose third material\n");
+		else
+			objects.push_back(Object(CONE));
+		break;
+	case '4':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose fourth material\n");
+		else
+			objects.push_back(Object(CYLINDER));
+		break;
+	case '5':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose fifth material\n");
+		else
+			objects.push_back(Object(TORUS));
+		break;
+	case '6':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose first texture\n");
+		else
+			objects.push_back(Object(TEAPOT));
+		break;
+	case '7':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose second texture\n");
+		else
+			objects.push_back(Object(TETRAHEDRON));
+		break;
+	case '8':
+		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+			printf("Choose third texture\n");
+		else
+			objects.push_back(Object(OCTAHEDRON));
+		break;
+	case '9':
+		if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
+			objects.push_back(Object(DODECAHEDRON));
+		break;
+	case '0':
+		if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
+			objects.push_back(Object(ICOSAHEDRON));
+		break;
 
-		// Quit program
-		case 'q':
-		case 'Q':
-		case 27:
-			exit(0);
-			break;
+	// Quit program
+	case 'q':
+	case 'Q':
+	case 27:
+		exit(0);
+		break;
 
-		// Clear the scene graph of objects
-		case 'r':
-		case 'R':
-			objects.clear();
-			break;
+	// Clear the scene graph of objects
+	case 'r':
+	case 'R':
+		objects.clear();
+		break;
 	}
 }
 
@@ -225,24 +225,24 @@ void special(int key, int x, int y)
 	// Assign direction from arrow key pressed
 	switch (key)
 	{
-		case GLUT_KEY_LEFT:
-			direction = LEFT;
-			break;
-		case GLUT_KEY_RIGHT:
-			direction = RIGHT;
-			break;
-		case GLUT_KEY_DOWN:
-			direction = DOWN;
-			break;
-		case GLUT_KEY_UP:
-			direction = UP;
-			break;
-		case GLUT_KEY_PAGE_DOWN:
-			direction = BACK;
-			break;
-		case GLUT_KEY_PAGE_UP:
-			direction = FRONT;
-			break;
+	case GLUT_KEY_LEFT:
+		direction = LEFT;
+		break;
+	case GLUT_KEY_RIGHT:
+		direction = RIGHT;
+		break;
+	case GLUT_KEY_DOWN:
+		direction = DOWN;
+		break;
+	case GLUT_KEY_UP:
+		direction = UP;
+		break;
+	case GLUT_KEY_PAGE_DOWN:
+		direction = BACK;
+		break;
+	case GLUT_KEY_PAGE_UP:
+		direction = FRONT;
+		break;
 	}
 
 	if (direction == NONE)
