@@ -207,59 +207,59 @@ void keyboard(unsigned char key, int x, int y)
 	{
 	// Add objects or choose material
 	case '1':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose first material\n");
 		else
 			objects.push_back(Object(CUBE));
 		break;
 	case '2':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose second material\n");
 		else
 			objects.push_back(Object(SPHERE));
 		break;
 	case '3':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose third material\n");
 		else
 			objects.push_back(Object(CONE));
 		break;
 	case '4':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose fourth material\n");
 		else
 			objects.push_back(Object(CYLINDER));
 		break;
 	case '5':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose fifth material\n");
 		else
 			objects.push_back(Object(TORUS));
 		break;
 	case '6':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose first texture\n");
 		else
 			objects.push_back(Object(TEAPOT));
 		break;
 	case '7':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose second texture\n");
 		else
 			objects.push_back(Object(TETRAHEDRON));
 		break;
 	case '8':
-		if (glutGetModifiers() & GLUT_ACTIVE_ALT)
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			printf("Choose third texture\n");
 		else
 			objects.push_back(Object(OCTAHEDRON));
 		break;
 	case '9':
-		if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
+		if (!(glutGetModifiers() == GLUT_ACTIVE_ALT))
 			objects.push_back(Object(DODECAHEDRON));
 		break;
 	case '0':
-		if (!(glutGetModifiers() & GLUT_ACTIVE_ALT))
+		if (!(glutGetModifiers() == GLUT_ACTIVE_ALT))
 			objects.push_back(Object(ICOSAHEDRON));
 		break;
 
@@ -354,27 +354,27 @@ int main(int argc, char ** argv)
 {
 	// Display camera controls to command line
 	printf("Direction controls (using keyboard) referenced below:\n"
-		"Left/Right Arrows -> Perform action along x axis (left/right)\n"
-		"Down/Up Arrows    -> Perform action along y axis (down/up)\n"
-		"Page Down/Up      -> Perform action along z axis (back/front)\n"
+		"  Left/Right Arrows -> Perform action along x axis (left/right)\n"
+		"     Down/Up Arrows -> Perform action along y axis (down/up)\n"
+		"       Page Down/Up -> Perform action along z axis (back/front)\n"
 		"\nSimple keyboard controls:\n"
-		"Number (1-8 only) -> Choose material/texture for new objects\n"
-		"Alt + Number      -> New object at world origin\n"
-		"L                 -> Load previously saved scene from file\n"
-		"M                 -> Apply chosen material to selected object\n"
-		"Q/Esc             -> Quit the program\n"
-		"R                 -> Reset scene (delete all objects)\n"
-		"S                 -> Save current scene to file\n"
+		"        Number (1-0) -> New object at world origin\n"
+		"  Alt + Number (1-8) -> Choose material/texture for new objects\n"
+		"             L       -> Load previously saved scene from file\n"
+		"             M       -> Apply chosen material to selected object\n"
+		"             Q/Esc   -> Quit the program\n"
+		"             R       -> Reset scene (delete all objects)\n"
+		"             S       -> Save current scene to file\n"
 		"\nDirectional keyboard controls:\n"
-		"               Direction -> Move camera\n"
-		"        Ctrl + Direction -> Rotate selected object\n"
-		"         Alt + Direction -> Scale selected object\n"
-		"       Shift + Direction -> Translate selected object\n"
-		"Ctrl + Shift + Direction -> Move first light source\n"
-		" Alt + Shift + Direction -> Move second light source\n"
+		"                 Direction -> Move camera\n"
+		"          Ctrl + Direction -> Rotate selected object\n"
+		"           Alt + Direction -> Scale selected object\n"
+		"         Shift + Direction -> Translate selected object\n"
+		"  Ctrl + Shift + Direction -> Move first light source\n"
+		"   Alt + Shift + Direction -> Move second light source\n"
 		"\nMouse controls (anywhere on display window):\n"
-		"Left mouse click  -> Select object under cursor\n"
-		"Right mouse click -> Delete object under cursor\n");
+		"  Left mouse click  -> Select object under cursor\n"
+		"  Right mouse click -> Delete object under cursor\n");
 
 	// GLUT initialization
 	glutInit(&argc, argv);
