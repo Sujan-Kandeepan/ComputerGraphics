@@ -39,9 +39,9 @@ float cameraPos[] = { initialZoom, initialZoom / 2, initialZoom };
 // Lighting values with variable positions
 float lightPos1[] = { 1, initialZoom, initialZoom, 1 };
 float lightPos2[] = { initialZoom, initialZoom, 1, 1 };
-float lightAmb[] = { 0.25, 0.25, 0.25, 1 };
-float lightDif[] = { 0.25, 0.25, 0.25, 1 };
-float lightSpc[] = { 0.25, 0.25, 0.25, 1 };
+float lightAmb[] = { 0.35, 0.35, 0.35, 1 };
+float lightDif[] = { 0.35, 0.35, 0.35, 1 };
+float lightSpc[] = { 0.35, 0.35, 0.35, 1 };
 
 // Rotation for visualization (temporary)
 float rotation = 0;
@@ -302,6 +302,9 @@ void special(int key, int x, int y)
 		break;
 	case GLUT_KEY_PAGE_UP:
 		direction = FRONT;
+		break;
+	default:
+		direction = NONE;
 		break;
 	}
 
