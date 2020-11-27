@@ -33,6 +33,9 @@ int selected = 0;
 const float axisLength = 100;
 const float initialZoom = 10;
 
+// Camera position
+float cameraPos[] = { initialZoom, initialZoom / 2, initialZoom };
+
 // Rotation for visualization (temporary)
 float rotation = 0;
 void rotate(int val)
@@ -96,7 +99,7 @@ void display()
 
 	// Position camera away from and looking at origin
 	gluLookAt(
-		initialZoom, initialZoom / 2, initialZoom,
+		cameraPos[X], cameraPos[Y], cameraPos[Z],
 		0, 0, 0,
 		0, 1, 0
 	);
@@ -306,7 +309,7 @@ void special(int key, int x, int y)
 	}
 	else
 	{
-		// TODO: move camera
+		applyChange(cameraPos, direction, 1, 2, axisLength);
 	}
 }
 
