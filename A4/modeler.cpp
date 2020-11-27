@@ -36,6 +36,13 @@ const float initialZoom = 10;
 // Camera position
 float cameraPos[] = { initialZoom, initialZoom / 2, initialZoom };
 
+// Lighting values with variable positions
+float lightPos1[] = { 1, initialZoom, initialZoom, 1 };
+float lightPos2[] = { initialZoom, initialZoom, 1, 1 };
+float lightAmb[] = { 0.25, 0.25, 0.25, 1 };
+float lightDif[] = { 0.25, 0.25, 0.25, 1 };
+float lightSpc[] = { 0.25, 0.25, 0.25, 1 };
+
 // Rotation for visualization (temporary)
 float rotation = 0;
 void rotate(int val)
@@ -104,15 +111,31 @@ void display()
 		0, 1, 0
 	);
 
-	// Temporary lighting setup
-	float pos[4] = {axisLength, axisLength, axisLength, 1};
-	float amb[4] = {0.5, 0.5, 0.5, 1};
-	float dif[4] = {0.5, 0.5, 0.5, 1};
-	float spc[4] = {0.5, 0.5, 0.5, 1};
-	glLightfv(GL_LIGHT0, GL_POSITION, pos);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+	// Set light values for first light source
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPos1);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpc);
+
+	// Set light values for second light source
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPos2);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDif);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmb);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpc);
+
+	// Depict first light source as tiny bright red sphere
+	plainColorMaterial(1, 0.75, 0.75);
+	glPushMatrix();
+		glTranslatef(lightPos1[X], lightPos1[Y], lightPos1[Z]);
+		glutSolidSphere(0.1, 100, 100);
+	glPopMatrix();
+
+	// Depict second light source as tiny bright blue sphere
+	plainColorMaterial(0.75, 0.75, 1);
+	glPushMatrix();
+		glTranslatef(lightPos2[X], lightPos2[Y], lightPos2[Z]);
+		glutSolidSphere(0.1, 100, 100);
+	glPopMatrix();
 
 	// y/z plane on boundary of display area
 	plainColorMaterial(0.45, 0.5, 0.5);
@@ -301,11 +324,11 @@ void special(int key, int x, int y)
 	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT))
 	{
-		// TODO: create and move first light source
+		applyChange(lightPos1, direction, 1, 1, axisLength);
 	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT))
 	{
-		// TODO: create and move second light source
+		applyChange(lightPos2, direction, 1, 1, axisLength);
 	}
 	else
 	{
@@ -382,6 +405,7 @@ int main(int argc, char ** argv)
 	// Enable lighting
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	glEnable(GL_NORMALIZE);
 
 	// Enable backface culling
