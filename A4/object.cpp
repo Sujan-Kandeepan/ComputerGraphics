@@ -15,6 +15,9 @@
 #  include <GL/freeglut.h>
 #endif
 
+// Local library import
+#include "material.cpp"
+
 // Enum for supported object types
 enum ObjectType
 {
@@ -23,14 +26,14 @@ enum ObjectType
 };
 
 // Enum for bounding box indices (better readability)
-enum BoxCorners
+enum BoxCorner
 {
 	BACK_BOTTOM_LEFT, BACK_BOTTOM_RIGHT, BACK_TOP_LEFT, BACK_TOP_RIGHT,
 	FRONT_BOTTOM_LEFT, FRONT_BOTTOM_RIGHT, FRONT_TOP_LEFT, FRONT_TOP_RIGHT
 };
 
 // Enum for coordinates (better readability)
-enum Coordinates { X, Y, Z, A };
+enum Coordinate { X, Y, Z, A };
 
 // Struct for objects
 struct Object
@@ -39,24 +42,18 @@ struct Object
 	float position[3];
 	float rotation[3];
 	float scale[3];
-	float materialAmb[4];
-	float materialDif[4];
-	float materialSpc[4];
-	float materialShiny;
+	Material material;
 	ObjectType objectType;
 	float bounds[8][3];
 
 	// Constructor
-	Object(ObjectType o)
+	Object(Material m, ObjectType o)
 	{
-		this->setPosition(0.5, 0.5, 0.5);
-		this->setRotation(0, 0, 0);
-		this->setScale(1, 1, 1);
-		this->setMaterialAmb(0.25, 0.25, 0.25, 1);
-		this->setMaterialDif(0.25, 0.25, 0.25, 1);
-		this->setMaterialSpc(0.25, 0.25, 0.25, 1);
-		this->materialShiny = 1;
-		this->objectType = o;
+		setPosition(0.5, 0.5, 0.5);
+		setRotation(0, 0, 0);
+		setScale(1, 1, 1);
+		material = m;
+		objectType = o;
 	}
 
 	// Set position (x, y, z) values
@@ -83,46 +80,65 @@ struct Object
 		scale[Z] = z;
 	}
 
-	// Set material ambience (x, y, z, a) values
-	void setMaterialAmb(float x, float y, float z, float a)
-	{
-		materialAmb[X] = x;
-		materialAmb[Y] = y;
-		materialAmb[Z] = z;
-		materialAmb[A] = a;
-	}
-
-	// Set material diffuse (x, y, z, a) values
-	void setMaterialDif(float x, float y, float z, float a)
-	{
-		materialDif[X] = x;
-		materialDif[Y] = y;
-		materialDif[Z] = z;
-		materialDif[A] = a;
-	}
-
-	// Set material specular (x, y, z, a) values
-	void setMaterialSpc(float x, float y, float z, float a)
-	{
-		materialSpc[X] = x;
-		materialSpc[Y] = y;
-		materialSpc[Z] = z;
-		materialSpc[A] = a;
-	}
-
 	// Draw object based on properties + bounding box if selected
 	void drawObject(int selected = 0)
 	{
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, materialAmb);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, materialDif);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, materialSpc);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, materialShiny);
+		// Set material values
+		switch (material)
+		{
+		case TURQUOISE:
+			setMaterialAmb(0.10, 0.19, 0.17, 0.80);
+			setMaterialDif(0.40, 0.74, 0.69, 0.80);
+			setMaterialSpc(0.30, 0.31, 0.31, 0.80);
+			setMaterialShn(12.8);
+			break;
+		case RED_RUBBER:
+			setMaterialAmb(0.05, 0.00, 0.00, 1.00);
+			setMaterialDif(0.50, 0.40, 0.40, 1.00);
+			setMaterialSpc(0.70, 0.04, 0.04, 1.00);
+			setMaterialShn(10.0);
+			break;
+		case GREEN_PLASTIC:
+			setMaterialAmb(0.02, 0.17, 0.02, 0.55);
+			setMaterialDif(0.08, 0.61, 0.08, 0.55);
+			setMaterialSpc(0.63, 0.73, 0.63, 0.55);
+			setMaterialShn(76.8);
+			break;
+		case PERL:
+			setMaterialAmb(0.25, 0.21, 0.21, 0.92);
+			setMaterialDif(1.00, 0.83, 0.83, 0.92);
+			setMaterialSpc(0.30, 0.30, 0.30, 0.92);
+			setMaterialShn(11.3);
+			break;
+		case OBSIDIAN:
+			setMaterialAmb(0.05, 0.05, 0.07, 0.82);
+			setMaterialDif(0.18, 0.17, 0.23, 0.82);
+			setMaterialSpc(0.33, 0.33, 0.35, 0.82);
+			setMaterialShn(38.4);
+			break;
+		case TIN:
+			setMaterialAmb(0.11, 0.06, 0.11, 1.00);
+			setMaterialDif(0.43, 0.47, 0.54, 1.00);
+			setMaterialSpc(0.33, 0.33, 0.52, 1.00);
+			setMaterialShn(9.85);
+			break;
+		case POLISHED_BRONZE:
+			setMaterialAmb(0.25, 0.15, 0.06, 1.00);
+			setMaterialDif(0.40, 0.24, 0.10, 1.00);
+			setMaterialSpc(0.77, 0.46, 0.20, 1.00);
+			setMaterialShn(76.8);
+			break;
+		}
+
 		glPushMatrix();
+			// Perform transformation before drawing
 			glTranslatef(position[X], position[Y], position[Z]);
 			glScalef(scale[X], scale[Y], scale[Z]);
 			glRotatef(rotation[X], 1, 0, 0);
 			glRotatef(rotation[Y], 0, 1, 0);
 			glRotatef(rotation[Z], 0, 0, 1);
+
+			// Draw unit-sized object based on type
 			switch (objectType)
 			{
 			case CUBE:
@@ -183,8 +199,10 @@ struct Object
 				glPopMatrix();
 				break;
 			}
+
+			// Draw bounding box if selected
 			if (selected)
-				this->drawBounds();
+				drawBounds();
 		glPopMatrix();
 	}
 

@@ -16,7 +16,8 @@
 #  include <GL/freeglut.h>
 #endif
 
-// Object type imports
+// Local library imports
+#include "material.cpp"
 #include "object.cpp"
 
 // Enum for direction (used for keyboard actions)
@@ -43,26 +44,8 @@ float lightAmb[] = { 0.35, 0.35, 0.35, 1 };
 float lightDif[] = { 0.35, 0.35, 0.35, 1 };
 float lightSpc[] = { 0.35, 0.35, 0.35, 1 };
 
-// Rotation for visualization (temporary)
-float rotation = 0;
-void rotate(int val)
-{
-	rotation++;
-	glutTimerFunc(1000 / 60, rotate, 0);
-}
-
-// Set temporary plain color for objects to be drawn
-void plainColorMaterial(float r, float g, float b)
-{
-	float colorAmb[4] = {r, g, b, 1};
-	float colorDif[4] = {r, g, b, 1};
-	float colorSpc[4] = {r, g, b, 1};
-	float colorShiny = 1;
-	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, colorAmb);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, colorDif);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, colorSpc);
-	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, colorShiny);
-}
+// Currently selected material
+static Material material = TURQUOISE;
 
 // Nudge value in vector by given direction/amount with constraints
 void applyChange(float * vec, Direction direction,
@@ -205,62 +188,73 @@ void keyboard(unsigned char key, int x, int y)
 	// Perform action depending on character received
 	switch (key)
 	{
-	// Add objects or choose material
+	// Add objects or choose material/texture
 	case '1':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose first material\n");
+			objects.push_back(Object(material, CUBE));
 		else
-			objects.push_back(Object(CUBE));
+			material = TURQUOISE;
 		break;
 	case '2':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose second material\n");
+			objects.push_back(Object(material, SPHERE));
 		else
-			objects.push_back(Object(SPHERE));
+			material = RED_RUBBER;
 		break;
 	case '3':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose third material\n");
+			objects.push_back(Object(material, CONE));
 		else
-			objects.push_back(Object(CONE));
+			material = GREEN_PLASTIC;
 		break;
 	case '4':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose fourth material\n");
+			objects.push_back(Object(material, CYLINDER));
 		else
-			objects.push_back(Object(CYLINDER));
+			material = PERL;
 		break;
 	case '5':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose fifth material\n");
+			objects.push_back(Object(material, TORUS));
 		else
-			objects.push_back(Object(TORUS));
+			material = OBSIDIAN;
 		break;
 	case '6':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose first texture\n");
+			objects.push_back(Object(material, TEAPOT));
 		else
-			objects.push_back(Object(TEAPOT));
+			material = TIN;
 		break;
 	case '7':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose second texture\n");
+			objects.push_back(Object(material, TETRAHEDRON));
 		else
-			objects.push_back(Object(TETRAHEDRON));
+			material = POLISHED_BRONZE;
 		break;
 	case '8':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-			printf("Choose third texture\n");
+			objects.push_back(Object(material, OCTAHEDRON));
 		else
-			objects.push_back(Object(OCTAHEDRON));
+			printf("Choose first texture\n");
 		break;
 	case '9':
-		if (!(glutGetModifiers() == GLUT_ACTIVE_ALT))
-			objects.push_back(Object(DODECAHEDRON));
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
+			objects.push_back(Object(material, DODECAHEDRON));
+		else
+			printf("Choose second texture\n");
 		break;
 	case '0':
-		if (!(glutGetModifiers() == GLUT_ACTIVE_ALT))
-			objects.push_back(Object(ICOSAHEDRON));
+		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
+			objects.push_back(Object(material, ICOSAHEDRON));
+		else
+			printf("Choose third texture\n");
+		break;
+
+	// Change material of selected object
+	case 'm':
+	case 'M':
+		if (selected != -1)
+			objects.at(selected).material = material;
 		break;
 
 	// Quit program
@@ -308,35 +302,25 @@ void special(int key, int x, int y)
 		break;
 	}
 
+	// Do nothing if not a directional key or no object selected
 	if (direction == NONE || selected == -1)
 		return;
 
+	// Perform action depending on direction and key modifiers
 	if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
-	{
 		applyChange(objects.at(selected).rotation, direction, 1);
-	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-	{
 		applyChange(objects.at(selected).scale,
 			direction, 0.5, 0.5, axisLength);
-	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_SHIFT)
-	{
 		applyChange(objects.at(selected).position,
 			direction, 1, 0, axisLength);
-	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT))
-	{
 		applyChange(lightPos1, direction, 1, 1, axisLength);
-	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT))
-	{
 		applyChange(lightPos2, direction, 1, 1, axisLength);
-	}
 	else
-	{
 		applyChange(cameraPos, direction, 1, 2, axisLength);
-	}
 }
 
 // Reshape function: adjusts view upon resize of window
@@ -358,20 +342,20 @@ int main(int argc, char ** argv)
 		"     Down/Up Arrows -> Perform action along y axis (down/up)\n"
 		"       Page Down/Up -> Perform action along z axis (back/front)\n"
 		"\nSimple keyboard controls:\n"
-		"        Number (1-0) -> New object at world origin\n"
-		"  Alt + Number (1-8) -> Choose material/texture for new objects\n"
-		"             L       -> Load previously saved scene from file\n"
-		"             M       -> Apply chosen material to selected object\n"
-		"             Q/Esc   -> Quit the program\n"
-		"             R       -> Reset scene (delete all objects)\n"
-		"             S       -> Save current scene to file\n"
+		"        Number -> Choose material/texture for new objects\n"
+		"  Alt + Number -> New object at world origin\n"
+		"        L      -> Load previously saved scene from file\n"
+		"        M      -> Apply chosen material to selected object\n"
+		"        Q/Esc  -> Quit the program\n"
+		"        R      -> Reset scene (delete all objects)\n"
+		"        S      -> Save current scene to file\n"
 		"\nDirectional keyboard controls:\n"
 		"                 Direction -> Move camera\n"
-		"          Ctrl + Direction -> Rotate selected object\n"
-		"           Alt + Direction -> Scale selected object\n"
+		"         Ctrl  + Direction -> Rotate selected object\n"
+		"         Alt   + Direction -> Scale selected object\n"
 		"         Shift + Direction -> Translate selected object\n"
 		"  Ctrl + Shift + Direction -> Move first light source\n"
-		"   Alt + Shift + Direction -> Move second light source\n"
+		"  Alt  + Shift + Direction -> Move second light source\n"
 		"\nMouse controls (anywhere on display window):\n"
 		"  Left mouse click  -> Select object under cursor\n"
 		"  Right mouse click -> Delete object under cursor\n");
@@ -390,13 +374,11 @@ int main(int argc, char ** argv)
 	glutCreateWindow("3GC3 - Assignment 4");
 
 	// Temporary object for testing
-	Object o = Object(ICOSAHEDRON);
+	Object o = Object(material, ICOSAHEDRON);
 	o.setPosition(3, 3, 3);
 	o.setRotation(30, 30, 30);
 	o.setScale(2, 2, 2);
-	o.setMaterialAmb(0.3, 0.2, 0.1, 1);
-	o.setMaterialDif(0.8, 0.7, 0.5, 1);
-	o.setMaterialSpc(0.2, 0.2, 0.1, 1);
+	o.material = TURQUOISE;
 	objects.push_back(o);
 
 	// I/O function bindings
@@ -417,7 +399,6 @@ int main(int argc, char ** argv)
 	glCullFace(GL_BACK);
 
 	// Main program loop
-	glutTimerFunc(1000 / 60, rotate, 0);
 	glutMainLoop();
 
 	// Exit normally
