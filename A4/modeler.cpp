@@ -80,46 +80,9 @@ void applyChange(float * vec, Direction direction,
 	}
 }
 
-// Display function: renders display area
-void display()
+// Draw planes along 3 axes
+void drawAxisBounds()
 {
-	// Reset display before rendering display area
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glLoadIdentity();
-
-	// Position camera away from and looking at origin
-	gluLookAt(
-		cameraPos[X], cameraPos[Y], cameraPos[Z],
-		0, 0, 0,
-		0, 1, 0
-	);
-
-	// Set light values for first light source
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos1);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpc);
-
-	// Set light values for second light source
-	glLightfv(GL_LIGHT1, GL_POSITION, lightPos2);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDif);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmb);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpc);
-
-	// Depict first light source as tiny bright red sphere
-	plainColorMaterial(1, 0.75, 0.75);
-	glPushMatrix();
-		glTranslatef(lightPos1[X], lightPos1[Y], lightPos1[Z]);
-		glutSolidSphere(0.1, 100, 100);
-	glPopMatrix();
-
-	// Depict second light source as tiny bright blue sphere
-	plainColorMaterial(0.75, 0.75, 1);
-	glPushMatrix();
-		glTranslatef(lightPos2[X], lightPos2[Y], lightPos2[Z]);
-		glutSolidSphere(0.1, 100, 100);
-	glPopMatrix();
-
 	// y/z plane on boundary of display area
 	plainColorMaterial(0.45, 0.5, 0.5);
 	glNormal3f(1, 0, 0);
@@ -170,6 +133,50 @@ void display()
 		glVertex3f(0.1, 0.1, 0.1);
 		glVertex3f(0.1, 0.1, axisLength);
 	glEnd();
+}
+
+// Display function: renders display area
+void display()
+{
+	// Reset display before rendering display area
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glLoadIdentity();
+
+	// Position camera away from and looking at origin
+	gluLookAt(
+		cameraPos[X], cameraPos[Y], cameraPos[Z],
+		0, 0, 0,
+		0, 1, 0
+	);
+
+	// Draw planes along 3 axes
+	drawAxisBounds();
+
+	// Set light values for first light source
+	glLightfv(GL_LIGHT0, GL_POSITION, lightPos1);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDif);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmb);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpc);
+
+	// Set light values for second light source
+	glLightfv(GL_LIGHT1, GL_POSITION, lightPos2);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDif);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmb);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpc);
+
+	// Depict first light source as tiny bright red sphere
+	plainColorMaterial(1, 0.75, 0.75);
+	glPushMatrix();
+		glTranslatef(lightPos1[X], lightPos1[Y], lightPos1[Z]);
+		glutSolidSphere(0.1, 100, 100);
+	glPopMatrix();
+
+	// Depict second light source as tiny bright blue sphere
+	plainColorMaterial(0.75, 0.75, 1);
+	glPushMatrix();
+		glTranslatef(lightPos2[X], lightPos2[Y], lightPos2[Z]);
+		glutSolidSphere(0.1, 100, 100);
+	glPopMatrix();
 
 	// Iterate through linear scene graph and draw objects
 	for (int i = 0; i < objects.size(); i++)
