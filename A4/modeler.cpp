@@ -235,19 +235,19 @@ void keyboard(unsigned char key, int x, int y)
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			objects.push_back(Object(material, OCTAHEDRON));
 		else
-			printf("Choose first texture\n");
+			material = CARPET;
 		break;
 	case '9':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			objects.push_back(Object(material, DODECAHEDRON));
 		else
-			printf("Choose second texture\n");
+			material = MARBLE;
 		break;
 	case '0':
 		if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 			objects.push_back(Object(material, ICOSAHEDRON));
 		else
-			printf("Choose third texture\n");
+			material = ROCK;
 		break;
 
 	// Change material of selected object
@@ -345,7 +345,7 @@ int main(int argc, char ** argv)
 		"        Number -> Choose material/texture for new objects\n"
 		"  Alt + Number -> New object at world origin\n"
 		"        L      -> Load previously saved scene from file\n"
-		"        M      -> Apply chosen material to selected object\n"
+		"        M      -> Apply material/texture to selected object\n"
 		"        Q/Esc  -> Quit the program\n"
 		"        R      -> Reset scene (delete all objects)\n"
 		"        S      -> Save current scene to file\n"
@@ -374,6 +374,15 @@ int main(int argc, char ** argv)
 	glutCreateWindow("3GC3 - Assignment 4");
 
 	// Temporary object for testing
+	// Object o = Object(material, CUBE);
+	// Object o = Object(material, SPHERE);
+	// Object o = Object(material, CONE);
+	// Object o = Object(material, CYLINDER);
+	// Object o = Object(material, TORUS);
+	// Object o = Object(material, TEAPOT);
+	// Object o = Object(material, TETRAHEDRON);
+	// Object o = Object(material, OCTAHEDRON);
+	// Object o = Object(material, DODECAHEDRON);
 	Object o = Object(material, ICOSAHEDRON);
 	o.setPosition(3, 3, 3);
 	o.setRotation(30, 30, 30);
@@ -397,6 +406,9 @@ int main(int argc, char ** argv)
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+
+	// Initialize texturing
+	initTexture();
 
 	// Main program loop
 	glutMainLoop();

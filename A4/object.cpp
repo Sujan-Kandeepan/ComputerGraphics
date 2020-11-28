@@ -128,6 +128,11 @@ struct Object
 			setMaterialSpc(0.77, 0.46, 0.20, 1.00);
 			setMaterialShn(76.8);
 			break;
+		case CARPET:
+		case MARBLE:
+		case ROCK:
+			plainColorMaterial(0.5, 0.5, 0.5);
+			break;
 		}
 
 		glPushMatrix();
@@ -137,6 +142,24 @@ struct Object
 			glRotatef(rotation[X], 1, 0, 0);
 			glRotatef(rotation[Y], 0, 1, 0);
 			glRotatef(rotation[Z], 0, 0, 1);
+
+			// Bind texture before drawing
+			glPushMatrix();
+			switch (material)
+			{
+			case CARPET:
+				glBindTexture(GL_TEXTURE_2D, textures[0]);
+				break;
+			case MARBLE:
+				glBindTexture(GL_TEXTURE_2D, textures[1]);
+				break;
+			case ROCK:
+				glBindTexture(GL_TEXTURE_2D, textures[2]);
+				break;
+			default:
+				glBindTexture(GL_TEXTURE_2D, 0);
+				break;
+			}
 
 			// Draw unit-sized object based on type
 			switch (objectType)
@@ -148,24 +171,18 @@ struct Object
 				glutSolidSphere(0.5, 100, 100);
 				break;
 			case CONE:
-				glPushMatrix();
-					glRotatef(-90, 1, 0, 0);
-					glTranslatef(0, 0, -0.5);
-					glutSolidCone(0.5, 1, 100, 100);
-				glPopMatrix();
+				glRotatef(-90, 1, 0, 0);
+				glTranslatef(0, 0, -0.5);
+				glutSolidCone(0.5, 1, 100, 100);
 				break;
 			case CYLINDER:
-				glPushMatrix();
-					glRotatef(-90, 1, 0, 0);
-					glTranslatef(0, 0, -0.5);
-					glutSolidCylinder(0.5, 1, 100, 100);
-				glPopMatrix();
+				glRotatef(-90, 1, 0, 0);
+				glTranslatef(0, 0, -0.5);
+				glutSolidCylinder(0.5, 1, 100, 100);
 				break;
 			case TORUS:
-				glPushMatrix();
-					glRotatef(-90, 1, 0, 0);
-					glutSolidTorus(0.2, 0.35, 100, 100);
-				glPopMatrix();
+				glRotatef(-90, 1, 0, 0);
+				glutSolidTorus(0.2, 0.35, 100, 100);
 				break;
 			case TEAPOT:
 				glFrontFace(GL_CW);
@@ -173,32 +190,28 @@ struct Object
 				glFrontFace(GL_CCW);
 				break;
 			case TETRAHEDRON:
-				glPushMatrix();
-					glRotatef(90, 0, 0, 1);
-					glTranslatef(-0.25, -0.125, 0);
-					glScalef(0.75, 0.75, 0.75);
-					glutSolidTetrahedron();
-				glPopMatrix();
+				glRotatef(90, 0, 0, 1);
+				glTranslatef(-0.25, -0.125, 0);
+				glScalef(0.75, 0.75, 0.75);
+				glutSolidTetrahedron();
 				break;
 			case OCTAHEDRON:
-				glPushMatrix();
-					glScalef(0.6, 0.6, 0.6);
-					glutSolidOctahedron();
-				glPopMatrix();
+				glScalef(0.6, 0.6, 0.6);
+				glutSolidOctahedron();
 				break;
 			case DODECAHEDRON:
-				glPushMatrix();
-					glScalef(0.4, 0.4, 0.4);
-					glutSolidDodecahedron();
-				glPopMatrix();
+				glScalef(0.4, 0.4, 0.4);
+				glutSolidDodecahedron();
 				break;
 			case ICOSAHEDRON:
-				glPushMatrix();
-					glScalef(0.6, 0.6, 0.6);
-					glutSolidIcosahedron();
-				glPopMatrix();
+				glScalef(0.6, 0.6, 0.6);
+				glutSolidIcosahedron();
 				break;
 			}
+
+			// Unbind texture after drawing
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glPopMatrix();
 
 			// Draw bounding box if selected
 			if (selected)
