@@ -356,51 +356,51 @@ struct Object
 		// Vector toward object from ray origin
 		double toObject[3] =
 		{
-			position[0] - rayStart[0],
-			position[1] - rayStart[1],
-			position[2] - rayStart[2]
+			position[X] - rayStart[X],
+			position[Y] - rayStart[Y],
+			position[Z] - rayStart[Z]
 		};
 
 		// Ray vector from start to end
 		double ray[3] =
 		{
-			rayEnd[0] - rayStart[0],
-			rayEnd[1] - rayStart[1],
-			rayEnd[2] - rayStart[2]
+			rayEnd[X] - rayStart[X],
+			rayEnd[Y] - rayStart[Y],
+			rayEnd[Z] - rayStart[Z]
 		};
 
 		// Dot product of vector to object with ray
-		double toObjectDotRay = toObject[0] * ray[0]
-			+ toObject[1] * ray[1] + toObject[2] * ray[2];
+		double toObjectDotRay = toObject[X] * ray[X]
+			+ toObject[Y] * ray[Y] + toObject[Z] * ray[Z];
 
 		// Normalized ray vector
-		double rayNormal = pow(ray[0], 2)
-			+ pow(ray[1], 2) + pow(ray[2], 2);
+		double rayNormal = pow(ray[X], 2)
+			+ pow(ray[Y], 2) + pow(ray[Z], 2);
 
 		// Projection of vector to object onto ray
 		double projection[3] =
 		{
-			toObjectDotRay / rayNormal * ray[0],
-			toObjectDotRay / rayNormal * ray[1],
-			toObjectDotRay / rayNormal * ray[2],
+			toObjectDotRay / rayNormal * ray[X],
+			toObjectDotRay / rayNormal * ray[Y],
+			toObjectDotRay / rayNormal * ray[Z],
 		};
 
 		// Length of projection (distance to object from ray origin)
-		double projectionLength = sqrt(pow(projection[0], 2)
-			+ pow(projection[1], 2) + pow(projection[2], 2));
+		double projectionLength = sqrt(pow(projection[X], 2)
+			+ pow(projection[Y], 2) + pow(projection[Z], 2));
 
 		// Point on ray nearest to object
 		double rayNearest[3] =
 		{
-			rayStart[0] + projection[0],
-			rayStart[1] + projection[1],
-			rayStart[2] + projection[2]
+			rayStart[X] + projection[X],
+			rayStart[Y] + projection[Y],
+			rayStart[Z] + projection[Z]
 		};
 
 		// Distance from object to nearest point on ray
-		double distance = fabs(sqrt(pow(position[0] - rayNearest[0], 2)
-			+ pow(position[1] - rayNearest[1], 2)
-			+ pow(position[2] - rayNearest[2], 2)));
+		double distance = fabs(sqrt(pow(position[X] - rayNearest[X], 2)
+			+ pow(position[Y] - rayNearest[Y], 2)
+			+ pow(position[Z] - rayNearest[Z], 2)));
 
 		// Return distance to object if intersects, or indicator otherwise
 		return distance <= boundRadius() ? projectionLength : -1;
