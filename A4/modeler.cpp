@@ -109,6 +109,30 @@ void applyChange(float * vec, Direction direction,
 	}
 }
 
+// Compute ray and store globally
+void computeRay(int x, int y)
+{
+	// Get model view and model projection
+	double matModelView[16], matProjection[16];
+	glGetDoublev( GL_MODELVIEW_MATRIX, matModelView );
+	glGetDoublev( GL_PROJECTION_MATRIX, matProjection );
+
+	// Get viewport
+	int viewport[4];
+	glGetIntegerv( GL_VIEWPORT, viewport );
+
+	// Get window x and y coordinates (y is inverted)
+	double winX = (double)x, winY = viewport[3] - (double)y;
+
+	// Get coordinates at beginning of mouse ray
+	gluUnProject(winX, winY, 0.0, matModelView, matProjection,
+			viewport, &rayStart[X], &rayStart[Y], &rayStart[Z]);
+
+	// Get coordinates at end of mouse ray
+	gluUnProject(winX, winY, 1.0, matModelView, matProjection,
+			viewport, &rayEnd[X], &rayEnd[Y], &rayEnd[Z]);
+}
+
 // Check if object intersects ray and return distance if so
 double raySphereIntersection(double *rayStart, double *rayEnd,
 	float *position, float radius)
@@ -133,16 +157,16 @@ double raySphereIntersection(double *rayStart, double *rayEnd,
 	double toObjectDotRay = toObject[X] * ray[X]
 		+ toObject[Y] * ray[Y] + toObject[Z] * ray[Z];
 
-	// Normalized ray vector
-	double rayNormal = pow(ray[X], 2)
+	// Ray magnitude squared
+	double rayMagnitudeSquared = pow(ray[X], 2)
 		+ pow(ray[Y], 2) + pow(ray[Z], 2);
 
 	// Projection of vector to object onto ray
 	double projection[3] =
 	{
-		toObjectDotRay / rayNormal * ray[X],
-		toObjectDotRay / rayNormal * ray[Y],
-		toObjectDotRay / rayNormal * ray[Z],
+		toObjectDotRay / rayMagnitudeSquared * ray[X],
+		toObjectDotRay / rayMagnitudeSquared * ray[Y],
+		toObjectDotRay / rayMagnitudeSquared * ray[Z],
 	};
 
 	// Length of projection (distance to object from ray origin)
@@ -538,25 +562,8 @@ void mouse(int btn, int state, int x, int y){
 		|| state != GLUT_DOWN)
 		return;
 
-	// Get model view and model projection
-	double matModelView[16], matProjection[16];
-	glGetDoublev( GL_MODELVIEW_MATRIX, matModelView );
-	glGetDoublev( GL_PROJECTION_MATRIX, matProjection );
-
-	// Get viewport
-	int viewport[4];
-	glGetIntegerv( GL_VIEWPORT, viewport );
-
-	// Get window x and y coordinates (y is inverted)
-	double winX = (double)x, winY = viewport[3] - (double)y;
-
-	// Get coordinates at beginning of mouse ray
-	gluUnProject(winX, winY, 0.0, matModelView, matProjection,
-			viewport, &rayStart[0], &rayStart[1], &rayStart[2]);
-
-	// Get coordinates at end of mouse ray
-	gluUnProject(winX, winY, 1.0, matModelView, matProjection,
-			viewport, &rayEnd[0], &rayEnd[1], &rayEnd[2]);
+	// Compute ray from mouse x/y
+	computeRay(x, y);
 
 	// Find object with closest intersect with mouse ray
 	int nearest = NONE;
@@ -605,6 +612,67 @@ void mouse(int btn, int state, int x, int y){
 	}
 }
 
+// Motion function: pivot camera on mouse drag
+void motion(int x, int y)
+{
+	// Get inverted mouse ray before mouse drag
+	double prevRay[3] =
+	{
+		rayStart[X] - rayEnd[X],
+		rayStart[Y] - rayEnd[Y],
+		rayStart[Z] - rayEnd[Z]
+	};
+
+	// Normalize mouse ray before mouse drag
+	double prevRayDistance = fabs(sqrt(pow(prevRay[X], 2)
+		+ pow(prevRay[Y], 2) + pow(prevRay[Z], 2)));
+	double prevRayNormal[] =
+	{
+		prevRay[X] / prevRayDistance,
+		prevRay[Y] / prevRayDistance,
+		prevRay[Z] / prevRayDistance
+	};
+
+	// Normalize camera position before mouse drag
+	double prevCamDistance = fabs(sqrt(pow(cameraPos[X], 2)
+		+ pow(cameraPos[Y], 2) + pow(cameraPos[Z], 2)));
+	double prevCamNormal[] =
+	{
+		cameraPos[X] / prevCamDistance,
+		cameraPos[Y] / prevCamDistance,
+		cameraPos[Z] / prevCamDistance
+	};
+
+	// Compute new ray from mouse x/y
+	computeRay(x, y);
+
+	// Get inverted mouse ray after mouse drag
+	double ray[3] =
+	{
+		rayStart[X] - rayEnd[X],
+		rayStart[Y] - rayEnd[Y],
+		rayStart[Z] - rayEnd[Z]
+	};
+
+	// Normalize mouse ray after mouse drag
+	double rayDistance = fabs(sqrt(pow(prevRay[X], 2)
+		+ pow(prevRay[Y], 2) + pow(prevRay[Z], 2)));
+	double rayNormal[] =
+	{
+		ray[X] / rayDistance,
+		ray[Y] / rayDistance,
+		ray[Z] / rayDistance
+	};
+
+	// Adjust camera within bounds and with reduced sensitivity
+	cameraPos[X] = fmax(1, prevCamDistance * (prevCamNormal[X]
+		+ 0.5 * (rayNormal[X] - prevRayNormal[X])));
+	cameraPos[Y] = fmax(1, prevCamDistance * (prevCamNormal[Y]
+		+ 0.5 * (rayNormal[Y] - prevRayNormal[Y])));
+	cameraPos[Z] = fmax(1, prevCamDistance * (prevCamNormal[Z]
+		+ 0.5 * (rayNormal[Z] - prevRayNormal[Z])));
+}
+
 // Reshape function: adjusts view upon resize of window
 void reshape(int w, int h)
 {
@@ -640,7 +708,8 @@ int main(int argc, char ** argv)
 		"  Alt  + Shift + Direction -> Move second light source\n"
 		"\nMouse controls (anywhere on display window):\n"
 		"  Left mouse click  -> Select object/light source under cursor\n"
-		"  Right mouse click -> Delete object under cursor\n");
+		"  Right mouse click -> Delete object under cursor\n"
+		"         Mouse drag -> Swivel camera at current distance\n");
 
 	// Initialize global settings
 	initialSettings();
@@ -661,6 +730,7 @@ int main(int argc, char ** argv)
 	// I/O function bindings
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
+	glutMotionFunc(motion);
 	glutMouseFunc(mouse);
 	glutReshapeFunc(reshape);
 	glutSpecialFunc(special);

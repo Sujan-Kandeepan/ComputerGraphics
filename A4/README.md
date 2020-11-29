@@ -8,7 +8,8 @@ Optionally load `scene.txt` to start with a non-empty scene.
 
 ## Additional Features
 
-- Light source ray picking (option 9).
+- Camera control (option 9).
+- Light source ray picking (option 12).
 
 ## External Resources Referenced
 
