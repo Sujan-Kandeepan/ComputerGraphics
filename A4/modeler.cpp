@@ -390,7 +390,11 @@ void mouse(int btn, int state, int x, int y){
 
 	// Delete nearest object on right click
 	if (btn == GLUT_RIGHT_BUTTON && nearest != -1)
+	{
 		objects.erase(objects.begin() + nearest);
+		if (selected == nearest)
+			selected = -1;
+	}
 }
 
 // Reshape function: adjusts view upon resize of window
