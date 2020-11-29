@@ -25,6 +25,9 @@
 enum Direction { LEFT, RIGHT, DOWN, UP, BACK, FRONT };
 Direction direction;
 
+// Enum for selections which are not object indices
+enum NonIndexSelections { NONE = -1, LIGHT1 = -2, LIGHT2 = -3 };
+
 // Index of selected object
 static int selected;
 
@@ -44,6 +47,7 @@ float lightPos2[] = { 0, 0, 0, 1 };
 float lightAmb[] = { 0.35, 0.35, 0.35, 1 };
 float lightDif[] = { 0.35, 0.35, 0.35, 1 };
 float lightSpc[] = { 0.35, 0.35, 0.35, 1 };
+float lightSphereRadius = 0.1;
 
 // Mouse ray start and end
 double* rayStart = new double[3];
@@ -69,7 +73,7 @@ void initialSettings()
 	lightPos2[Y] = initialZoom;
 	lightPos2[Z] = 1;
 	material = TURQUOISE;
-	selected = -1;
+	selected = NONE;
 }
 
 // Nudge value in vector by given direction/amount with constraints
@@ -103,6 +107,63 @@ void applyChange(float * vec, Direction direction,
 			vec[Z] += amount;
 		break;
 	}
+}
+
+// Check if object intersects ray and return distance if so
+double raySphereIntersection(double *rayStart, double *rayEnd,
+	float *position, float radius)
+{
+	// Vector toward object from ray origin
+	double toObject[3] =
+	{
+		position[X] - rayStart[X],
+		position[Y] - rayStart[Y],
+		position[Z] - rayStart[Z]
+	};
+
+	// Ray vector from start to end
+	double ray[3] =
+	{
+		rayEnd[X] - rayStart[X],
+		rayEnd[Y] - rayStart[Y],
+		rayEnd[Z] - rayStart[Z]
+	};
+
+	// Dot product of vector to object with ray
+	double toObjectDotRay = toObject[X] * ray[X]
+		+ toObject[Y] * ray[Y] + toObject[Z] * ray[Z];
+
+	// Normalized ray vector
+	double rayNormal = pow(ray[X], 2)
+		+ pow(ray[Y], 2) + pow(ray[Z], 2);
+
+	// Projection of vector to object onto ray
+	double projection[3] =
+	{
+		toObjectDotRay / rayNormal * ray[X],
+		toObjectDotRay / rayNormal * ray[Y],
+		toObjectDotRay / rayNormal * ray[Z],
+	};
+
+	// Length of projection (distance to object from ray origin)
+	double projectionLength = sqrt(pow(projection[X], 2)
+		+ pow(projection[Y], 2) + pow(projection[Z], 2));
+
+	// Point on ray nearest to object
+	double rayNearest[3] =
+	{
+		rayStart[X] + projection[X],
+		rayStart[Y] + projection[Y],
+		rayStart[Z] + projection[Z]
+	};
+
+	// Distance from object to nearest point on ray
+	double distance = fabs(sqrt(pow(position[X] - rayNearest[X], 2)
+		+ pow(position[Y] - rayNearest[Y], 2)
+		+ pow(position[Z] - rayNearest[Z], 2)));
+
+	// Return distance to object if intersects, or indicator otherwise
+	return distance <= radius ? projectionLength : -1;
 }
 
 // Load scene from file
@@ -268,17 +329,23 @@ void display()
 	glLightfv(GL_LIGHT1, GL_SPECULAR, lightSpc);
 
 	// Depict first light source as tiny bright red sphere
-	plainColorMaterial(1, 0.75, 0.75);
+	if (selected == LIGHT1)
+		plainColorMaterial(0, 1, 0);
+	else
+		plainColorMaterial(1, 0.75, 0.75);
 	glPushMatrix();
 		glTranslatef(lightPos1[X], lightPos1[Y], lightPos1[Z]);
-		glutSolidSphere(0.1, 100, 100);
+		glutSolidSphere(lightSphereRadius, 100, 100);
 	glPopMatrix();
 
 	// Depict second light source as tiny bright blue sphere
-	plainColorMaterial(0.75, 0.75, 1);
+	if (selected == LIGHT2)
+		plainColorMaterial(0, 1, 0);
+	else
+		plainColorMaterial(0.75, 0.75, 1);
 	glPushMatrix();
 		glTranslatef(lightPos2[X], lightPos2[Y], lightPos2[Z]);
-		glutSolidSphere(0.1, 100, 100);
+		glutSolidSphere(lightSphereRadius, 100, 100);
 	glPopMatrix();
 
 	// Iterate through linear scene graph and draw objects
@@ -373,7 +440,7 @@ void keyboard(unsigned char key, int x, int y)
 	// Change material of selected object
 	case 'm':
 	case 'M':
-		if (selected != -1)
+		if (selected >= 0)
 			objects.at(selected).material = material;
 		break;
 
@@ -433,26 +500,28 @@ void special(int key, int x, int y)
 	// Perform action depending on direction and key modifiers
 	if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
 	{
-		if (selected != -1)
+		if (selected >= 0)
 			applyChange(objects.at(selected).rotation, direction, 1);
 	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_ALT)
 	{
-		if (selected != -1)
+		if (selected >= 0)
 			applyChange(objects.at(selected).scale,
 				direction, 0.5, 0.5, axisLength);
 	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_SHIFT)
 	{
-		if (selected != -1)
+		if (selected >= 0)
 			applyChange(objects.at(selected).position,
 				direction, 1, 0, axisLength);
 	}
-	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT))
+	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT)
+		|| selected == LIGHT1)
 	{
 		applyChange(lightPos1, direction, 1, 1, axisLength);
 	}
-	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT))
+	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT)
+		|| selected == LIGHT2)
 	{
 		applyChange(lightPos2, direction, 1, 1, axisLength);
 	}
@@ -490,11 +559,12 @@ void mouse(int btn, int state, int x, int y){
 			viewport, &rayEnd[0], &rayEnd[1], &rayEnd[2]);
 
 	// Find object with closest intersect with mouse ray
-	int nearest = -1;
+	int nearest = NONE;
 	double closestIntersect = DBL_MAX;
 	for (int i = 0; i < objects.size(); i++)
 	{
-		double intersect = objects.at(i).intersect(rayStart, rayEnd);
+		double intersect = raySphereIntersection(rayStart, rayEnd,
+			objects.at(i).position, objects.at(i).boundRadius());
 		if (intersect != -1 && intersect < closestIntersect)
 		{
 			closestIntersect = intersect;
@@ -502,16 +572,36 @@ void mouse(int btn, int state, int x, int y){
 		}
 	}
 
-	// Select nearest object on left click
+	// Select nearest object/light source on left click
 	if (btn == GLUT_LEFT_BUTTON)
+	{
+		// Select first light source if clicked
+		double intersect = raySphereIntersection(rayStart, rayEnd,
+			lightPos1, lightSphereRadius);
+		if (intersect != -1 && intersect < closestIntersect)
+		{
+			closestIntersect = intersect;
+			nearest = LIGHT1;
+		}
+
+		// Select second light source if clicked
+		intersect = raySphereIntersection(rayStart, rayEnd,
+			lightPos2, lightSphereRadius);
+		if (intersect != -1 && intersect < closestIntersect)
+		{
+			closestIntersect = intersect;
+			nearest = LIGHT2;
+		}
+
 		selected = nearest;
+	}
 
 	// Delete nearest object on right click
-	if (btn == GLUT_RIGHT_BUTTON && nearest != -1)
+	if (btn == GLUT_RIGHT_BUTTON && nearest >= 0)
 	{
 		objects.erase(objects.begin() + nearest);
 		if (selected == nearest)
-			selected = -1;
+			selected = NONE;
 	}
 }
 
@@ -542,14 +632,14 @@ int main(int argc, char ** argv)
 		"        R      -> Reset scene (delete all objects)\n"
 		"        S      -> Save current scene to file\n"
 		"\nDirectional keyboard controls:\n"
-		"                 Direction -> Move camera\n"
+		"                 Direction -> Move camera/selected light source\n"
 		"         Ctrl  + Direction -> Rotate selected object\n"
 		"         Alt   + Direction -> Scale selected object\n"
 		"         Shift + Direction -> Translate selected object\n"
 		"  Ctrl + Shift + Direction -> Move first light source\n"
 		"  Alt  + Shift + Direction -> Move second light source\n"
 		"\nMouse controls (anywhere on display window):\n"
-		"  Left mouse click  -> Select object under cursor\n"
+		"  Left mouse click  -> Select object/light source under cursor\n"
 		"  Right mouse click -> Delete object under cursor\n");
 
 	// Initialize global settings
