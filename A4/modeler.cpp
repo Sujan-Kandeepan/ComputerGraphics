@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <vector>
 
 // OpenGL and GLUT imports
@@ -24,32 +25,52 @@
 enum Direction { LEFT, RIGHT, DOWN, UP, BACK, FRONT };
 Direction direction;
 
-// Linear scene graph of objects
-std::vector<Object> objects;
-
 // Index of selected object
-int selected = -1;
+static int selected;
+
+// Currently selected material
+static Material material;
 
 // Constant values for display
 const float axisLength = 100;
 const float initialZoom = 10;
 
 // Camera position
-float cameraPos[] = { initialZoom, initialZoom / 2, initialZoom };
+float cameraPos[3];
 
 // Lighting values with variable positions
-float lightPos1[] = { 1, initialZoom, initialZoom, 1 };
-float lightPos2[] = { initialZoom, initialZoom, 1, 1 };
+float lightPos1[] = { 0, 0, 0, 1 };
+float lightPos2[] = { 0, 0, 0, 1 };
 float lightAmb[] = { 0.35, 0.35, 0.35, 1 };
 float lightDif[] = { 0.35, 0.35, 0.35, 1 };
 float lightSpc[] = { 0.35, 0.35, 0.35, 1 };
 
-// Currently selected material
-static Material material = TURQUOISE;
-
 // Mouse ray start and end
 double* rayStart = new double[3];
 double* rayEnd = new double[3];
+
+// Filename for loading/saving scene
+char filename[64];
+
+// Linear scene graph of objects
+std::vector<Object> objects;
+
+// Initialize global variables;
+void initialSettings()
+{
+	objects.clear();
+	cameraPos[X] = initialZoom;
+	cameraPos[Y] = initialZoom / 2;
+	cameraPos[Z] = initialZoom;
+	lightPos1[X] = 1;
+	lightPos1[Y] = initialZoom;
+	lightPos1[Z] = initialZoom;
+	lightPos2[X] = initialZoom;
+	lightPos2[Y] = initialZoom;
+	lightPos2[Z] = 1;
+	material = TURQUOISE;
+	selected = -1;
+}
 
 // Nudge value in vector by given direction/amount with constraints
 void applyChange(float * vec, Direction direction,
@@ -82,6 +103,84 @@ void applyChange(float * vec, Direction direction,
 			vec[Z] += amount;
 		break;
 	}
+}
+
+// Load scene from file
+void loadScene(char *filename)
+{
+	// Open file for read, warn if not found
+	FILE *file = fopen(filename, "r");
+	if (!file)
+	{
+		printf("File not found.\n");
+		return;
+	}
+
+	// First revert to initial settings
+	initialSettings();
+
+	// Temporary variables for selection/material set last
+	int tempSelected, tempMaterial;
+
+	// Get saved settings from first row
+	fscanf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+		&cameraPos[X], &cameraPos[Y], &cameraPos[Z],
+		&lightPos1[X], &lightPos1[Y], &lightPos1[Z],
+		&lightPos2[X], &lightPos2[Y], &lightPos2[Z],
+		&tempSelected, &tempMaterial);
+
+	// Get objects and populate vector from remaining rows
+	while (!feof(file))
+	{
+		Object o = Object(TURQUOISE, CUBE);
+		fscanf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+			&o.position[X], &o.position[Y], &o.position[Z],
+			&o.rotation[X], &o.rotation[Y], &o.rotation[Z],
+			&o.scale[X], &o.scale[Y], &o.scale[Z],
+			(int*)&o.material, (int*)&o.objectType);
+		objects.push_back(o);
+	}
+
+	// Set selection/material last
+	selected = tempSelected;
+	material = (Material)tempMaterial;
+
+	// Close file
+	fclose(file);
+
+	// Print confirmation message to console
+	printf("Successfully loaded scene from file '%s'\n", filename);
+}
+
+// Save scene from file
+void saveScene(char *filename)
+{
+	// Open file for write
+	FILE *file = fopen(filename, "w");
+
+	// Write current settings to first row
+	fprintf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+		cameraPos[X], cameraPos[Y], cameraPos[Z],
+		lightPos1[X], lightPos1[Y], lightPos1[Z],
+		lightPos2[X], lightPos2[Y], lightPos2[Z],
+		selected, material);
+
+	// Write object metadata to remaining rows
+	for (int i = 0; i < objects.size(); i++)
+	{
+		Object o = objects.at(i);
+		fprintf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+			o.position[X], o.position[Y], o.position[Z],
+			o.rotation[X], o.rotation[Y], o.rotation[Z],
+			o.scale[X], o.scale[Y], o.scale[Z],
+			o.material, o.objectType);
+	}
+
+	// Close file
+	fclose(file);
+
+	// Print confirmation message to console
+	printf("Successfully saved scene to file '%s'\n", filename);
 }
 
 // Draw planes along 3 axes
@@ -261,6 +360,16 @@ void keyboard(unsigned char key, int x, int y)
 			material = ROCK;
 		break;
 
+	// Load scene from file
+	case 'l':
+	case 'L':
+		memset(filename, '\0', sizeof(filename));
+		printf("Enter a filename ('cancel' to cancel): ");
+		scanf("%63s", filename);
+		if (!strstr(filename, "cancel"))
+			loadScene(filename);
+		break;
+
 	// Change material of selected object
 	case 'm':
 	case 'M':
@@ -278,8 +387,17 @@ void keyboard(unsigned char key, int x, int y)
 	// Clear the scene graph of objects
 	case 'r':
 	case 'R':
-		objects.clear();
-		selected = -1;
+		initialSettings();
+		break;
+
+	// Save scene to file
+	case 's':
+	case 'S':
+		memset(filename, '\0', sizeof(filename));
+		printf("Enter a filename ('cancel' to cancel): ");
+		scanf("%63s", filename);
+		if (!strstr(filename, "cancel"))
+			saveScene(filename);
 		break;
 	}
 }
@@ -434,6 +552,9 @@ int main(int argc, char ** argv)
 		"  Left mouse click  -> Select object under cursor\n"
 		"  Right mouse click -> Delete object under cursor\n");
 
+	// Initialize global settings
+	initialSettings();
+
 	// GLUT initialization
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH);
@@ -446,23 +567,6 @@ int main(int argc, char ** argv)
 
 	// Create window for displaying modeler
 	glutCreateWindow("3GC3 - Assignment 4");
-
-	// Temporary object for testing
-	// Object o = Object(material, CUBE);
-	// Object o = Object(material, SPHERE);
-	// Object o = Object(material, CONE);
-	// Object o = Object(material, CYLINDER);
-	// Object o = Object(material, TORUS);
-	// Object o = Object(material, TEAPOT);
-	// Object o = Object(material, TETRAHEDRON);
-	// Object o = Object(material, OCTAHEDRON);
-	// Object o = Object(material, DODECAHEDRON);
-	Object o = Object(material, ICOSAHEDRON);
-	o.setPosition(3, 3, 3);
-	o.setRotation(30, 30, 30);
-	o.setScale(2, 2, 2);
-	o.material = TURQUOISE;
-	objects.push_back(o);
 
 	// I/O function bindings
 	glutDisplayFunc(display);

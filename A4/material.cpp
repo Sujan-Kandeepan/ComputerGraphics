@@ -90,7 +90,6 @@ static GLubyte *LoadPPM(char *file, int *width, int *height, int *max)
     while (c == '#')
     {
         fscanf(fd, "%[^\n] ", b);
-        printf("%s\n", b);
         fscanf(fd, "%c", &c);
     }
     ungetc(c, fd);
@@ -109,6 +108,8 @@ static GLubyte *LoadPPM(char *file, int *width, int *height, int *max)
         img[3 * nm - 3 * i - 2] = green * s;
         img[3 * nm - 3 * i - 1] = blue * s;
     }
+
+    fclose(fd);
 
     *width = n;
     *height = m;
