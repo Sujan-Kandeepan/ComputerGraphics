@@ -4,6 +4,8 @@
 
 Run `make` to compile `modeler.cpp` and run `Modeler`.
 
+Optionally load `scene.txt` to start with a non-empty scene.
+
 ## External Resources Referenced
 
 - <http://www.it.hiof.no/~borres/j3d/explain/light/p-materials.html>
