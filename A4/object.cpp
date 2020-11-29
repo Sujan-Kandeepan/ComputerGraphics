@@ -44,7 +44,6 @@ struct Object
 	float scale[3];
 	Material material;
 	ObjectType objectType;
-	// float bounds[8][3];
 
 	// Constructor
 	Object(Material m, ObjectType o)
@@ -242,111 +241,4 @@ struct Object
 			glutWireSphere(1, 16, 8);
 		glPopMatrix();
 	}
-
-	/*
-	// Draw bounding box outline around object
-	void drawBounds()
-	{
-		// Set to outline and disable culling
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDisable(GL_CULL_FACE);
-
-		// Define green color material for outline
-		float green[4] = { 0, 1, 0, 1 };
-		float zero[4] = { 0, 0, 0, 0 };
-		glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, green);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, zero);
-		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, zero);
-		glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0);
-
-		// Define unit square
-		float square[8][3] =
-		{
-			{ -0.5, -0.5, -0.5 },
-			{  0.5, -0.5, -0.5 },
-			{ -0.5,  0.5, -0.5 },
-			{  0.5,  0.5, -0.5 },
-			{ -0.5, -0.5,  0.5 },
-			{  0.5, -0.5,  0.5 },
-			{ -0.5,  0.5,  0.5 },
-			{  0.5,  0.5,  0.5 }
-		};
-
-		// Bottom two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
-			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
-		glEnd();
-
-		// Top two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_TOP_LEFT]);
-			glVertex3fv(square[FRONT_TOP_LEFT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_TOP_LEFT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-			glVertex3fv(square[BACK_TOP_RIGHT]);
-		glEnd();
-
-		// Back two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
-			glVertex3fv(square[BACK_TOP_RIGHT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[BACK_TOP_RIGHT]);
-			glVertex3fv(square[BACK_TOP_LEFT]);
-		glEnd();
-
-		// Front two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-			glVertex3fv(square[FRONT_TOP_LEFT]);
-		glEnd();
-
-		// Left two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[BACK_TOP_LEFT]);
-			glVertex3fv(square[FRONT_TOP_LEFT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_LEFT]);
-			glVertex3fv(square[FRONT_TOP_LEFT]);
-			glVertex3fv(square[FRONT_BOTTOM_LEFT]);
-		glEnd();
-
-		// Right two triangles
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
-			glVertex3fv(square[BACK_TOP_RIGHT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-		glEnd();
-		glBegin(GL_TRIANGLES);
-			glVertex3fv(square[BACK_BOTTOM_RIGHT]);
-			glVertex3fv(square[FRONT_TOP_RIGHT]);
-			glVertex3fv(square[FRONT_BOTTOM_RIGHT]);
-		glEnd();
-
-		// Reset polygon mode and culling
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		glEnable(GL_CULL_FACE);
-	}
-	*/
 };
