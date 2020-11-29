@@ -44,12 +44,12 @@ struct Object
 	float scale[3];
 	Material material;
 	ObjectType objectType;
-	float bounds[8][3];
+	// float bounds[8][3];
 
 	// Constructor
 	Object(Material m, ObjectType o)
 	{
-		setPosition(0.5, 0.5, 0.5);
+		setPosition(1, 1, 1);
 		setRotation(0, 0, 0);
 		setScale(1, 1, 1);
 		material = m;
@@ -78,6 +78,13 @@ struct Object
 		scale[X] = x;
 		scale[Y] = y;
 		scale[Z] = z;
+	}
+
+	// Bounding sphere radius
+	float boundRadius()
+	{
+		// Set to 3/4 average of scale factor
+		return (scale[X] + scale[Y] + scale[Z]) / 4;
 	}
 
 	// Draw object based on properties + bounding box if selected
@@ -135,6 +142,7 @@ struct Object
 			break;
 		}
 
+		// Push matrix for object transformations
 		glPushMatrix();
 			// Perform transformation before drawing
 			glTranslatef(position[X], position[Y], position[Z]);
@@ -144,7 +152,6 @@ struct Object
 			glRotatef(rotation[Z], 0, 0, 1);
 
 			// Bind texture before drawing
-			glPushMatrix();
 			switch (material)
 			{
 			case CARPET:
@@ -161,19 +168,22 @@ struct Object
 				break;
 			}
 
+			// Push matrix for shape-specific transformations
+			glPushMatrix();
+
 			// Draw unit-sized object based on type
 			switch (objectType)
 			{
 			case CUBE:
-				glutSolidCube(1);
+				glutSolidCube(0.9);
 				break;
 			case SPHERE:
-				glutSolidSphere(0.5, 100, 100);
+				glutSolidSphere(0.70, 100, 100);
 				break;
 			case CONE:
 				glRotatef(-90, 1, 0, 0);
-				glTranslatef(0, 0, -0.5);
-				glutSolidCone(0.5, 1, 100, 100);
+				glTranslatef(0, 0, -0.25);
+				glutSolidCone(0.6, 1, 100, 100);
 				break;
 			case CYLINDER:
 				glRotatef(-90, 1, 0, 0);
@@ -182,7 +192,7 @@ struct Object
 				break;
 			case TORUS:
 				glRotatef(-90, 1, 0, 0);
-				glutSolidTorus(0.2, 0.35, 100, 100);
+				glutSolidTorus(0.25, 0.45, 100, 100);
 				break;
 			case TEAPOT:
 				glFrontFace(GL_CW);
@@ -191,12 +201,12 @@ struct Object
 				break;
 			case TETRAHEDRON:
 				glRotatef(90, 0, 0, 1);
-				glTranslatef(-0.25, -0.125, 0);
+				glTranslatef(0, 0, 0);
 				glScalef(0.75, 0.75, 0.75);
 				glutSolidTetrahedron();
 				break;
 			case OCTAHEDRON:
-				glScalef(0.6, 0.6, 0.6);
+				glScalef(0.75, 0.75, 0.75);
 				glutSolidOctahedron();
 				break;
 			case DODECAHEDRON:
@@ -204,21 +214,36 @@ struct Object
 				glutSolidDodecahedron();
 				break;
 			case ICOSAHEDRON:
-				glScalef(0.6, 0.6, 0.6);
+				glScalef(0.75, 0.75, 0.75);
 				glutSolidIcosahedron();
 				break;
 			}
 
-			// Unbind texture after drawing
-			glBindTexture(GL_TEXTURE_2D, 0);
+			// Pop matrix for shape-specific transformations
 			glPopMatrix();
 
-			// Draw bounding box if selected
-			if (selected)
-				drawBounds();
+			// Unbind texture after drawing
+			glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Pop matrix for object transformations
+		glPopMatrix();
+
+		// No bounding sphere if not selected
+		if (!selected)
+			return;
+
+		// Draw bounding sphere (upright around object)
+		glPushMatrix();
+			float radius = boundRadius();
+			plainColorMaterial(0, 1, 0);
+			glTranslatef(position[X], position[Y], position[Z]);
+			glScalef(radius, radius, radius);
+			glRotatef(90, 1, 0, 0);
+			glutWireSphere(1, 16, 8);
 		glPopMatrix();
 	}
 
+	/*
 	// Draw bounding box outline around object
 	void drawBounds()
 	{
@@ -322,5 +347,62 @@ struct Object
 		// Reset polygon mode and culling
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glEnable(GL_CULL_FACE);
+	}
+	*/
+
+	// Check if object intersects ray and return distance if so
+	double intersect(double *rayStart, double *rayEnd)
+	{
+		// Vector toward object from ray origin
+		double toObject[3] =
+		{
+			position[0] - rayStart[0],
+			position[1] - rayStart[1],
+			position[2] - rayStart[2]
+		};
+
+		// Ray vector from start to end
+		double ray[3] =
+		{
+			rayEnd[0] - rayStart[0],
+			rayEnd[1] - rayStart[1],
+			rayEnd[2] - rayStart[2]
+		};
+
+		// Dot product of vector to object with ray
+		double toObjectDotRay = toObject[0] * ray[0]
+			+ toObject[1] * ray[1] + toObject[2] * ray[2];
+
+		// Normalized ray vector
+		double rayNormal = pow(ray[0], 2)
+			+ pow(ray[1], 2) + pow(ray[2], 2);
+
+		// Projection of vector to object onto ray
+		double projection[3] =
+		{
+			toObjectDotRay / rayNormal * ray[0],
+			toObjectDotRay / rayNormal * ray[1],
+			toObjectDotRay / rayNormal * ray[2],
+		};
+
+		// Length of projection (distance to object from ray origin)
+		double projectionLength = sqrt(pow(projection[0], 2)
+			+ pow(projection[1], 2) + pow(projection[2], 2));
+
+		// Point on ray nearest to object
+		double rayNearest[3] =
+		{
+			rayStart[0] + projection[0],
+			rayStart[1] + projection[1],
+			rayStart[2] + projection[2]
+		};
+
+		// Distance from object to nearest point on ray
+		double distance = fabs(sqrt(pow(position[0] - rayNearest[0], 2)
+			+ pow(position[1] - rayNearest[1], 2)
+			+ pow(position[2] - rayNearest[2], 2)));
+
+		// Return distance to object if intersects, or indicator otherwise
+		return distance <= boundRadius() ? projectionLength : -1;
 	}
 };

@@ -21,14 +21,14 @@
 #include "object.cpp"
 
 // Enum for direction (used for keyboard actions)
-enum Direction { NONE, LEFT, RIGHT, DOWN, UP, BACK, FRONT };
-Direction direction = NONE;
+enum Direction { LEFT, RIGHT, DOWN, UP, BACK, FRONT };
+Direction direction;
 
 // Linear scene graph of objects
 std::vector<Object> objects;
 
 // Index of selected object
-int selected = 0;
+int selected = -1;
 
 // Constant values for display
 const float axisLength = 100;
@@ -46,6 +46,10 @@ float lightSpc[] = { 0.35, 0.35, 0.35, 1 };
 
 // Currently selected material
 static Material material = TURQUOISE;
+
+// Mouse ray start and end
+double* rayStart = new double[3];
+double* rayEnd = new double[3];
 
 // Nudge value in vector by given direction/amount with constraints
 void applyChange(float * vec, Direction direction,
@@ -305,29 +309,88 @@ void special(int key, int x, int y)
 		direction = FRONT;
 		break;
 	default:
-		direction = NONE;
-		break;
-	}
-
-	// Do nothing if not a directional key or no object selected
-	if (direction == NONE || selected == -1)
 		return;
+	}
 
 	// Perform action depending on direction and key modifiers
 	if (glutGetModifiers() == GLUT_ACTIVE_CTRL)
-		applyChange(objects.at(selected).rotation, direction, 1);
+	{
+		if (selected != -1)
+			applyChange(objects.at(selected).rotation, direction, 1);
+	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_ALT)
-		applyChange(objects.at(selected).scale,
-			direction, 0.5, 0.5, axisLength);
+	{
+		if (selected != -1)
+			applyChange(objects.at(selected).scale,
+				direction, 0.5, 0.5, axisLength);
+	}
 	else if (glutGetModifiers() == GLUT_ACTIVE_SHIFT)
-		applyChange(objects.at(selected).position,
-			direction, 1, 0, axisLength);
+	{
+		if (selected != -1)
+			applyChange(objects.at(selected).position,
+				direction, 1, 0, axisLength);
+	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_CTRL|GLUT_ACTIVE_SHIFT))
+	{
 		applyChange(lightPos1, direction, 1, 1, axisLength);
+	}
 	else if (glutGetModifiers() == (GLUT_ACTIVE_ALT|GLUT_ACTIVE_SHIFT))
+	{
 		applyChange(lightPos2, direction, 1, 1, axisLength);
+	}
 	else
+	{
 		applyChange(cameraPos, direction, 1, 2, axisLength);
+	}
+}
+
+// Mouse function: handles mouse click actions
+void mouse(int btn, int state, int x, int y){
+	// Only handle actions for left and right click (key down)
+	if ((btn != GLUT_LEFT_BUTTON && btn != GLUT_RIGHT_BUTTON)
+		|| state != GLUT_DOWN)
+		return;
+
+	// Get model view and model projection
+	double matModelView[16], matProjection[16];
+	glGetDoublev( GL_MODELVIEW_MATRIX, matModelView );
+	glGetDoublev( GL_PROJECTION_MATRIX, matProjection );
+
+	// Get viewport
+	int viewport[4];
+	glGetIntegerv( GL_VIEWPORT, viewport );
+
+	// Get window x and y coordinates (y is inverted)
+	double winX = (double)x, winY = viewport[3] - (double)y;
+
+	// Get coordinates at beginning of mouse ray
+	gluUnProject(winX, winY, 0.0, matModelView, matProjection,
+			viewport, &rayStart[0], &rayStart[1], &rayStart[2]);
+
+	// Get coordinates at end of mouse ray
+	gluUnProject(winX, winY, 1.0, matModelView, matProjection,
+			viewport, &rayEnd[0], &rayEnd[1], &rayEnd[2]);
+
+	// Find object with closest intersect with mouse ray
+	int nearest = -1;
+	double closestIntersect = DBL_MAX;
+	for (int i = 0; i < objects.size(); i++)
+	{
+		double intersect = objects.at(i).intersect(rayStart, rayEnd);
+		if (intersect != -1 && intersect < closestIntersect)
+		{
+			closestIntersect = intersect;
+			nearest = i;
+		}
+	}
+
+	// Select nearest object on left click
+	if (btn == GLUT_LEFT_BUTTON)
+		selected = nearest;
+
+	// Delete nearest object on right click
+	if (btn == GLUT_RIGHT_BUTTON && nearest != -1)
+		objects.erase(objects.begin() + nearest);
 }
 
 // Reshape function: adjusts view upon resize of window
@@ -400,6 +463,7 @@ int main(int argc, char ** argv)
 	// I/O function bindings
 	glutDisplayFunc(display);
 	glutKeyboardFunc(keyboard);
+	glutMouseFunc(mouse);
 	glutReshapeFunc(reshape);
 	glutSpecialFunc(special);
 
