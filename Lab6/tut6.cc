@@ -64,6 +64,7 @@ struct Image {
         /**
          * YOUR CODE HERE
          */
+        mImage = LoadPPM(filename, &mWidth, &mHeight);
     }
 
     void draw(unsigned int x, unsigned int y) {
@@ -85,6 +86,7 @@ struct Image {
         /**
          * YOUR CODE HERE
          */
+        glDrawPixels(mWidth, mHeight, GL_RGB, GL_UNSIGNED_BYTE, mImage);
     }
 
     void texture() {
@@ -95,6 +97,12 @@ struct Image {
          * I strongly recommend reading the documentation to get a loose sense
          * of what these values mean.
          */
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight,
+            0, GL_RGB, GL_UNSIGNED_BYTE, mImage);
     }
 };
 
@@ -106,7 +114,7 @@ struct Handler {
         /**
          * YOUR CODE HERE, replace `false` with your expression.
          */
-        return false;
+        return mLeft <= x && x <= mRight && mBottom <= y && y <= mTop;
     }
 
     void handleClickAt(unsigned int x, unsigned int y) {
@@ -136,6 +144,7 @@ struct InteractionHandler {
             /**
              * YOUR CODE HERE
              */
+            handler->handleClickAt(x, y);
         }
     }
 
@@ -153,6 +162,7 @@ struct InteractionHandler {
         /**
          * YOUR CODE HERE
          */
+        mHandlers.push_back(handler);
     }
 };
 
@@ -186,6 +196,7 @@ void displayPerspective() {
      * teapot.
      */
     teapot1.draw();
+    marbleTexture.texture();
 }
 
 void setOrthographicProjection() {
@@ -206,6 +217,7 @@ void displayOrthographic() {
      *
      * draw the hudInterfaceImage instance!
      */
+    hudInterfaceImage.draw(0, 0);
 }
 
 void display(void) {
@@ -237,6 +249,8 @@ void handleMouse(int button, int state, int x, int y) {
      * Check for GLUT_LEFT_BUTTON and GLUT_DOWN and then call
      * mouseHandler.leftClickDown, remember viewportHeight - y.
      */
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
+        mouseHandler.leftClickDown(x, viewportHeight - y);
 }
 
 void fps(int value) {
@@ -274,24 +288,78 @@ Handler rightButton = {
  * Add four more functions:
  * moveUp, moveDown, rotateLeft, rotateRight
  */
+void moveUp() {
+    teapot1.mPos[1] += 0.05;
+}
 
+void moveDown() {
+    teapot1.mPos[1] -= 0.05;
+}
+
+Handler upButton = {
+    65,
+    110,
+    130,
+    75,
+    moveUp
+};
+
+Handler downButton = {
+    65,
+    110,
+    75,
+    20,
+    moveDown
+};
+
+void rotateLeft() {
+    teapot1.mRotY -= 1;
+}
+
+void rotateRight() {
+    teapot1.mRotY += 1;
+}
+
+Handler rotateLeftButton = {
+    280,
+    340,
+    120,
+    25,
+    rotateLeft
+};
+
+Handler rotateRightButton = {
+    210,
+    270,
+    120,
+    25,
+    rotateRight
+};
 
 int main(int argc, char** argv) {
     /** YOUR CODE HERE
      *
      * Load hudInterfaceImage
      */
+    hudInterfaceImage.load((char*)"interface.ppm");
 
     /**
      * YOUR CODE HERE
      *
      * Call addHandler for our six handlers.
      */
+    mouseHandler.addHandler(&leftButton);
+    mouseHandler.addHandler(&rightButton);
+    mouseHandler.addHandler(&upButton);
+    mouseHandler.addHandler(&downButton);
+    mouseHandler.addHandler(&rotateLeftButton);
+    mouseHandler.addHandler(&rotateRightButton);
 
     /** YOUR CODE HERE FOR BONUS
      *
      * Load marbleTexture
      */
+    marbleTexture.load((char*)"marble.ppm");
     
     glutInit(&argc, argv);
     glutInitWindowSize(viewportWidth, viewportHeight);
@@ -314,6 +382,7 @@ int main(int argc, char** argv) {
      *
      * Enable textures.
      */
+    glEnable(GL_TEXTURE_2D);
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
